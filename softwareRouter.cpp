@@ -72,6 +72,9 @@ BOOL CsoftwareRouterApp::InitInstance()
 	// such as the name of your company or organization
 	SetRegistryKey(_T("Local AppWizard-Generated Applications"));
 
+	interface1 = new Interface(1);
+	interface2 = new Interface(2);
+
 	CSetIntDlg setIntDlg;
 	INT_PTR nResponse = setIntDlg.DoModal();
 	if (nResponse == IDOK)
@@ -104,5 +107,21 @@ BOOL CsoftwareRouterApp::InitInstance()
 	// Since the dialog has been closed, return FALSE so that we exit the
 	//  application, rather than start the application's message pump.
 	return FALSE;
+}
+
+Interface* CsoftwareRouterApp::getInterface(int id){
+	if (id == 1) {
+		return this->interface1;
+	}
+	if (id == 2) {
+		return this->interface2;
+	}
+	return NULL;
+}
+
+
+CsoftwareRouterDlg* CsoftwareRouterApp::getSoftwareRouterDialog()
+{
+	return (CsoftwareRouterDlg*)m_pMainWnd;
 }
 

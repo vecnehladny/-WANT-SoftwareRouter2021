@@ -24,10 +24,17 @@ public:
 // Overrides
 public:
 	virtual BOOL InitInstance();
+	BOOL statsEnabled;
+	Interface* getInterface(int);
+	CsoftwareRouterDlg* getSoftwareRouterDialog();
 
 // Implementation
 
 	DECLARE_MESSAGE_MAP()
+
+private:
+	Interface* interface1;
+	Interface* interface2;
 };
 
 extern CsoftwareRouterApp theApp;

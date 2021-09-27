@@ -9,16 +9,26 @@
 #define IDR_MAINFRAME                   128
 #define IDD_SET_INT_DIALOG              129
 #define IDC_INTERFACE1COMBO             1001
-#define IDC_INTERFACE1COMBO2            1002
 #define IDC_INTERFACE2COMBO             1002
+#define IDC_INT1DEVICENAME              1002
+#define IDC_INT1MACADDR                 1003
+#define IDC_INT1IPADDR                  1004
+#define IDC_INT1SETIPBTN                1005
+#define IDC_INT1ENABLEBTN               1006
+#define IDC_INT2DEVICENAME              1007
+#define IDC_INT2MACADDR                 1008
+#define IDC_INT2IPADDR                  1009
+#define IDC_INT2SETIPBTN                1010
+#define IDC_INT1ENABLEBTN2              1011
+#define IDC_INT2ENABLEBTN               1011
 
 // Next default values for new objects
 // 
 #ifdef APSTUDIO_INVOKED
 #ifndef APSTUDIO_READONLY_SYMBOLS
-#define _APS_NEXT_RESOURCE_VALUE        133
+#define _APS_NEXT_RESOURCE_VALUE        135
 #define _APS_NEXT_COMMAND_VALUE         32771
-#define _APS_NEXT_CONTROL_VALUE         1002
+#define _APS_NEXT_CONTROL_VALUE         1007
 #define _APS_NEXT_SYMED_VALUE           101
 #endif
 #endif

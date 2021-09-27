@@ -122,6 +122,14 @@ void CSetIntDlg::selectInterfaces() {
 		return;
 	}
 
+	//theApp.getInterface(1)->SetName(getAdapterRpcapAddressFromInterface(1));
+	//theApp.getInterface(1)->SetDescription(interfaceDescriptions[interface1Box.GetCurSel()]);
+	//theApp.GgetInterface(1)->SetMACAddress(interfaceMacAddresses[interface1Box.GetCurSel()]);
+
+	//theApp.getInterface(2)->SetName(getAdapterRpcapAddressFromInterface(2));
+	//theApp.getInterface(2)->SetDescription(interfaceDescriptions[interface2Box.GetCurSel()]);
+	//theApp.getInterface(2)->SetMACAddress(interfaceMacAddresses[interface2Box.GetCurSel()]);
+
 	clearAllAdapterInfos();
 	
 	CDialog::OnOK();

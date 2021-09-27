@@ -3,6 +3,9 @@
 //
 
 #pragma once
+#include "afxwin.h"
+#include "afxbutton.h"
+#include "Interface.h"
 
 
 // CsoftwareRouterDlg dialog
