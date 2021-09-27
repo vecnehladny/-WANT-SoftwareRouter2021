@@ -49,6 +49,11 @@ BOOL Interface::isEnabled()
 	return enabled;
 }
 
+BOOL Interface::isIpAddressSet()
+{
+	return ipAddressIsSet;
+}
+
 void Interface::enable()
 {
 	this->enabled = TRUE;

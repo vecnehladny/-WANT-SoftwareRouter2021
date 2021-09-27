@@ -29,6 +29,7 @@ public:
 	CString getDescription();
 	void setDescription(CString description);
 	BOOL isEnabled();
+	BOOL isIpAddressSet();
 	void enable();
 	void disable();
 	CString getMacAddress();

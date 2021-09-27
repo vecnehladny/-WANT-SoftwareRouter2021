@@ -59,12 +59,24 @@ CsoftwareRouterDlg::CsoftwareRouterDlg(CWnd* pParent /*=nullptr*/)
 void CsoftwareRouterDlg::DoDataExchange(CDataExchange* pDX)
 {
 	CDialogEx::DoDataExchange(pDX);
+	DDX_Control(pDX, IDC_INT1DEVICENAME, int1DeviceNameText);
+	DDX_Control(pDX, IDC_INT1MACADDR, int1MacAddressText);
+	DDX_Control(pDX, IDC_INT1IPADDR, int1IpAddressText);
+	DDX_Control(pDX, IDC_INT1SETIPBTN, int1SetIpButton);
+	DDX_Control(pDX, IDC_INT1ENABLEBTN, int1EnableButton);
+	DDX_Control(pDX, IDC_INT2IPADDR, int2IpAddressText);
+	DDX_Control(pDX, IDC_INT2MACADDR, int2MacAddressText);
+	DDX_Control(pDX, IDC_INT2DEVICENAME, int2DeviceNameText);
+	DDX_Control(pDX, IDC_INT2SETIPBTN, int2SetIpButton);
+	DDX_Control(pDX, IDC_INT2ENABLEBTN, int2EnableButton);
 }
 
 BEGIN_MESSAGE_MAP(CsoftwareRouterDlg, CDialogEx)
 	ON_WM_SYSCOMMAND()
 	ON_WM_PAINT()
 	ON_WM_QUERYDRAGICON()
+	ON_BN_CLICKED(IDC_INT1ENABLEBTN, &CsoftwareRouterDlg::onInt1EnableButtonClicked)
+	ON_BN_CLICKED(IDC_INT2ENABLEBTN, &CsoftwareRouterDlg::onInt2EnableButtonClicked)
 END_MESSAGE_MAP()
 
 
@@ -100,6 +112,7 @@ BOOL CsoftwareRouterDlg::OnInitDialog()
 	SetIcon(m_hIcon, FALSE);		// Set small icon
 
 	// TODO: Add extra initialization here
+	initInterfacesInfos();
 
 	return TRUE;  // return TRUE  unless you set the focus to a control
 }
@@ -153,3 +166,56 @@ HCURSOR CsoftwareRouterDlg::OnQueryDragIcon()
 	return static_cast<HCURSOR>(m_hIcon);
 }
 
+void CsoftwareRouterDlg::initInterfacesInfos()
+{
+	int1DeviceNameText.SetWindowTextW(theApp.getInterface(1)->getDescription());
+	int2DeviceNameText.SetWindowTextW(theApp.getInterface(2)->getDescription());
+
+	int1MacAddressText.SetWindowTextW(theApp.getInterface(1)->getMacAddress());
+	int2MacAddressText.SetWindowTextW(theApp.getInterface(2)->getMacAddress());
+}
+
+void CsoftwareRouterDlg::enableInterface(Interface* i, CMFCButton* enableButton)
+{
+	if (!i->isIpAddressSet())
+	{
+		AfxMessageBox(_T("You need to configure IP address"));
+		return;
+	}
+
+	i->enable();
+	enableButton->SetWindowTextW(_T("Disable"));
+}
+
+
+void CsoftwareRouterDlg::disableInterface(Interface* i, CMFCButton* disableButton)
+{
+	i->disable();
+	disableButton->SetWindowTextW(_T("Enable"));
+}
+
+
+void CsoftwareRouterDlg::onInt1EnableButtonClicked()
+{
+	Interface* i = theApp.getInterface(1);
+
+	if (i->isEnabled()) {
+		disableInterface(i, &int1EnableButton);
+	}
+	else {
+		enableInterface(i, &int1EnableButton);
+	}
+}
+
+
+void CsoftwareRouterDlg::onInt2EnableButtonClicked()
+{
+	Interface* i = theApp.getInterface(2);
+
+	if (i->isEnabled()) {
+		disableInterface(i, &int2EnableButton);
+	}
+	else {
+		enableInterface(i, &int2EnableButton);
+	}
+}
