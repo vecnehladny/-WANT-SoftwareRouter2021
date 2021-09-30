@@ -7,6 +7,7 @@
 #include "softwareRouter.h"
 #include "softwareRouterDlg.h"
 #include "afxdialogex.h"
+#include "SetIpDlg.h"
 
 #ifdef _DEBUG
 #define new DEBUG_NEW
@@ -77,6 +78,9 @@ BEGIN_MESSAGE_MAP(CsoftwareRouterDlg, CDialogEx)
 	ON_WM_QUERYDRAGICON()
 	ON_BN_CLICKED(IDC_INT1ENABLEBTN, &CsoftwareRouterDlg::onInt1EnableButtonClicked)
 	ON_BN_CLICKED(IDC_INT2ENABLEBTN, &CsoftwareRouterDlg::onInt2EnableButtonClicked)
+	ON_MESSAGE(WM_SETIP_MESSAGE, &CsoftwareRouterDlg::onSetIpMessage)
+	ON_BN_CLICKED(IDC_INT1SETIPBTN, &CsoftwareRouterDlg::onInt1SetIpButtonClicked)
+	ON_BN_CLICKED(IDC_INT2SETIPBTN, &CsoftwareRouterDlg::onInt2SetIpButtonClicked)
 END_MESSAGE_MAP()
 
 
@@ -218,4 +222,39 @@ void CsoftwareRouterDlg::onInt2EnableButtonClicked()
 	else {
 		enableInterface(i, &int2EnableButton);
 	}
+}
+
+void CsoftwareRouterDlg::setIpAddr(Interface* i, ipAddressStructure newIpAddressStruct)
+{
+	i->setIpAddress(newIpAddressStruct);
+	SendMessage(WM_SETIP_MESSAGE, 0, (LPARAM)i);
+}
+
+afx_msg LRESULT CsoftwareRouterDlg::onSetIpMessage(WPARAM wParam, LPARAM lParam)
+{
+	Interface* i = (Interface*)lParam;
+
+	if (i->getId() == 1) int1IpAddressText.SetWindowTextW(i->getIpAddress());
+	else int2IpAddressText.SetWindowTextW(i->getIpAddress());
+
+	return 0;
+}
+
+void CsoftwareRouterDlg::onInt1SetIpButtonClicked()
+{
+	AfxBeginThread(CsoftwareRouterDlg::editIpAddrThread, theApp.getInterface(1));
+}
+
+
+void CsoftwareRouterDlg::onInt2SetIpButtonClicked()
+{
+	AfxBeginThread(CsoftwareRouterDlg::editIpAddrThread, theApp.getInterface(2));
+}
+
+UINT CsoftwareRouterDlg::editIpAddrThread(void* pParam)
+{
+	SetIpDlg setIpDlg((Interface*)pParam);
+	setIpDlg.DoModal();
+
+	return 0;
 }

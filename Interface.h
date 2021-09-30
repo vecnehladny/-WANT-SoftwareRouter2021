@@ -37,6 +37,7 @@ public:
 	macAddressStructure getMacAddressStruct();
 	CString getIpAddress();
 	void setIpAddress(BYTE octet1, BYTE octet2, BYTE octet3, BYTE octet4, BYTE mask);
+	void setIpAddress(ipAddressStructure newIpAddressStruct);
 	ipAddressStructure getIpAddressStruct();
 	BYTE getMask();
 

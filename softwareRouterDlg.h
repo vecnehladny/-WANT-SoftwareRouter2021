@@ -7,6 +7,8 @@
 #include "afxbutton.h"
 #include "Interface.h"
 
+#define WM_SETIP_MESSAGE WM_APP+100
+
 
 // CsoftwareRouterDlg dialog
 class CsoftwareRouterDlg : public CDialogEx
@@ -51,10 +53,17 @@ private:
 	void initInterfacesInfos();
 
 public:
+	void setIpAddr(Interface* i, ipAddressStructure newIpAddressStruct);
 	void enableInterface(Interface* i, CMFCButton* enableButton);
 	void disableInterface(Interface* i, CMFCButton* disableButton);
+	static UINT editIpAddrThread(void* pParam);
 
 public:
+	afx_msg void onInt1SetIpButtonClicked();
+	afx_msg void onInt2SetIpButtonClicked();
 	afx_msg void onInt1EnableButtonClicked();
 	afx_msg void onInt2EnableButtonClicked();
+
+protected:
+	afx_msg LRESULT onSetIpMessage(WPARAM wParam, LPARAM lParam);
 };

@@ -189,6 +189,7 @@
     <ClInclude Include="pch.h" />
     <ClInclude Include="Resource.h" />
     <ClInclude Include="SetIntDlg.h" />
+    <ClInclude Include="SetIpDlg.h" />
     <ClInclude Include="softwareRouter.h" />
     <ClInclude Include="softwareRouterDlg.h" />
     <ClInclude Include="targetver.h" />
@@ -203,6 +204,7 @@
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|x64'">Create</PrecompiledHeader>
     </ClCompile>
     <ClCompile Include="SetIntDlg.cpp" />
+    <ClCompile Include="SetIpDlg.cpp" />
     <ClCompile Include="softwareRouter.cpp" />
     <ClCompile Include="softwareRouterDlg.cpp" />
   </ItemGroup>

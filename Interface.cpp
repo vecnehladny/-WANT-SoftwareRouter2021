@@ -122,3 +122,9 @@ BYTE Interface::getMask()
 {
 	return ipAddressStruct.mask;
 }
+
+void Interface::setIpAddress(ipAddressStructure newIpAddressStruct) {
+	ipAddressStruct = newIpAddressStruct;
+
+	ipAddressIsSet = TRUE;
+}
