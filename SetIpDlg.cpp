@@ -24,10 +24,14 @@ void SetIpDlg::DoDataExchange(CDataExchange* pDX)
 	CDialog::DoDataExchange(pDX);
 	DDX_Control(pDX, IDC_SETIPIP, setIpAddrBox);
 	DDX_Control(pDX, IDC_SETIPMASK, setIpMaskBox);
+	DDX_Control(pDX, IDC_SETIPMASKCIDR, setIpMaskCidrBox);
+	DDX_Control(pDX, IDC_SETIPMASKCIDRSPIN, setIpMaskCidrSpin);
 }
 
 
 BEGIN_MESSAGE_MAP(SetIpDlg, CDialog)
+	ON_NOTIFY(IPN_FIELDCHANGED, IDC_SETIPMASK, &SetIpDlg::onMaskChange)
+	ON_EN_CHANGE(IDC_SETIPMASKCIDR, &SetIpDlg::onMaskCidrChange)
 	ON_BN_CLICKED(IDOK, &SetIpDlg::onSetBtnClicked)
 END_MESSAGE_MAP()
 
@@ -40,10 +44,18 @@ BOOL SetIpDlg::OnInitDialog()
 	ipAddressStructure ipAddressStruct = setIpInterface->getIpAddressStruct();
 	CDialog::OnInitDialog();
 
+	setIpMaskCidrSpin.SetBuddy(GetDlgItem(IDC_SETIPMASKCIDR));
+	setIpMaskCidrSpin.SetRange(0, 32);
+
 	if (setIpInterface->isIpAddressSet())
 	{
-		setIpAddrBox.SetAddress(ipAddressStruct.octets[0], ipAddressStruct.octets[1], ipAddressStruct.octets[2], ipAddressStruct.octets[3]);
+		setIpAddrBox.SetAddress(
+			ipAddressStruct.octets[0],
+			ipAddressStruct.octets[1],
+			ipAddressStruct.octets[2], 
+			ipAddressStruct.octets[3]);
 		setMask(setIpInterface->getMask());
+		setIpMaskCidrSpin.SetPos(setIpInterface->getMask());
 	}
 
 	return TRUE;
@@ -111,4 +123,24 @@ void SetIpDlg::onSetBtnClicked()
 	theApp.getSoftwareRouterDialog()->setIpAddr(setIpInterface, ipAddressStruct);
 
 	CDialog::OnOK();
+}
+
+
+void SetIpDlg::onMaskCidrChange()
+{
+	BYTE cidr = (BYTE)GetDlgItemInt(IDC_SETIPMASKCIDR, NULL, 0);
+
+	if ((cidr >= 0) && (cidr <= 32)) setMask(cidr);
+}
+
+
+void SetIpDlg::onMaskChange(NMHDR* pNMHDR, LRESULT* pResult)
+{
+	BYTE cidr = getCidr();
+
+	if (cidr != INVALID_CIDR) {
+		setIpMaskCidrSpin.SetPos(cidr);
+	}
+
+	*pResult = 0;
 }

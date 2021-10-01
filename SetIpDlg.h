@@ -28,8 +28,12 @@ private:
 	Interface* setIpInterface;
 	CIPAddressCtrl setIpAddrBox;
 	CIPAddressCtrl setIpMaskBox;
+	CEdit setIpMaskCidrBox;
+	CSpinButtonCtrl setIpMaskCidrSpin;
 	BYTE getCidr(void);
 	void setMask(BYTE cidr);
 public:
 	afx_msg void onSetBtnClicked();
+	afx_msg void onMaskCidrChange();
+	afx_msg void onMaskChange(NMHDR* pNMHDR, LRESULT* pResult);
 };
