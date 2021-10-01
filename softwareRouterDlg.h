@@ -6,6 +6,8 @@
 #include "afxwin.h"
 #include "afxbutton.h"
 #include "Interface.h"
+#include "ProtocolStorage.h"
+#include "RoutingTable.h"
 
 #define WM_SETIP_MESSAGE WM_APP+100
 

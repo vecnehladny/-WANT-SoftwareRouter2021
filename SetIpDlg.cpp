@@ -50,10 +50,10 @@ BOOL SetIpDlg::OnInitDialog()
 	if (setIpInterface->isIpAddressSet())
 	{
 		setIpAddrBox.SetAddress(
-			ipAddressStruct.octets[0],
-			ipAddressStruct.octets[1],
-			ipAddressStruct.octets[2], 
-			ipAddressStruct.octets[3]);
+			ipAddressStruct.octets[3],
+			ipAddressStruct.octets[2],
+			ipAddressStruct.octets[1], 
+			ipAddressStruct.octets[0]);
 		setMask(setIpInterface->getMask());
 		setIpMaskCidrSpin.SetPos(setIpInterface->getMask());
 	}
@@ -115,10 +115,10 @@ void SetIpDlg::onSetBtnClicked()
 	}
 
 	setIpAddrBox.GetAddress(
-		ipAddressStruct.octets[0], 
-		ipAddressStruct.octets[1],
+		ipAddressStruct.octets[3], 
 		ipAddressStruct.octets[2],
-		ipAddressStruct.octets[3]);
+		ipAddressStruct.octets[1],
+		ipAddressStruct.octets[0]);
 
 	theApp.getSoftwareRouterDialog()->setIpAddr(setIpInterface, ipAddressStruct);
 

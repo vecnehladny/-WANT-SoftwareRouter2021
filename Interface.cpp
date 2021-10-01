@@ -94,10 +94,10 @@ CString Interface::getIpAddress()
 
 	toReturn.Format(
 		_T("%u.%u.%u.%u/%u"),
-		ipAddressStruct.octets[0],
-		ipAddressStruct.octets[1],
-		ipAddressStruct.octets[2],
 		ipAddressStruct.octets[3],
+		ipAddressStruct.octets[2],
+		ipAddressStruct.octets[1],
+		ipAddressStruct.octets[0],
 		ipAddressStruct.mask);
 
 	return toReturn;
@@ -127,4 +127,31 @@ void Interface::setIpAddress(ipAddressStructure newIpAddressStruct) {
 	ipAddressStruct = newIpAddressStruct;
 
 	ipAddressIsSet = TRUE;
+}
+
+CString Interface::getPrefix(void)
+{
+	ipAddressStructure prefix = getPrefixStruct();
+	CString prefixString;
+
+	prefixString.Format(
+		_TEXT("%u.%u.%u.%u/%u"),
+		prefix.octets[3], 
+		prefix.octets[2],
+		prefix.octets[1], 
+		prefix.octets[0],
+		prefix.mask);
+
+	return prefixString;
+}
+
+
+ipAddressStructure Interface::getPrefixStruct(void)
+{
+	ipAddressStructure prefix;
+
+	prefix.dw = (ipAddressStruct.dw >> (32 - ipAddressStruct.mask)) << (32 - ipAddressStruct.mask);
+	prefix.mask = ipAddressStruct.mask;
+
+	return prefix;
 }

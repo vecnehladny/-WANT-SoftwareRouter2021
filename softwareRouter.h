@@ -10,7 +10,6 @@
 
 #include "resource.h"		// main symbols
 #include "softwareRouterDlg.h"
-#include "ProtocolStorage.h"
 
 
 // CsoftwareRouterApp:
@@ -28,6 +27,7 @@ public:
 	BOOL statsEnabled;
 	Interface* getInterface(int);
 	CsoftwareRouterDlg* getSoftwareRouterDialog();
+	RoutingTable* getRoutingTable();
 
 // Implementation
 
@@ -36,6 +36,7 @@ public:
 private:
 	Interface* interface1;
 	Interface* interface2;
+	RoutingTable* routingTable;
 };
 
 extern CsoftwareRouterApp theApp;

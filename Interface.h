@@ -40,5 +40,6 @@ public:
 	void setIpAddress(ipAddressStructure newIpAddressStruct);
 	ipAddressStructure getIpAddressStruct();
 	BYTE getMask();
-
+	CString getPrefix(void);
+	ipAddressStructure getPrefixStruct(void);
 };

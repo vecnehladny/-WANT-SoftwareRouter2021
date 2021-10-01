@@ -17,14 +17,15 @@
 #define IDC_INT1SETIPBTN                1005
 #define IDC_INT1ENABLEBTN               1006
 #define IDC_INT2DEVICENAME              1007
-#define IDC_IPADDRESS1                  1007
 #define IDC_SETIPIP                     1007
 #define IDC_INT2MACADDR                 1008
 #define IDC_SETIPMASK                   1008
 #define IDC_INT2IPADDR                  1009
-#define IDC_SETIPMASKCIDR               1009
 #define IDC_INT2SETIPBTN                1010
+#define IDC_SETIPMASKCIDR               1010
 #define IDC_INT2ENABLEBTN               1011
+#define IDC_SPIN1                       1011
+#define IDC_SETIPMASKCIDRSPIN           1011
 
 // Next default values for new objects
 // 
@@ -32,7 +33,7 @@
 #ifndef APSTUDIO_READONLY_SYMBOLS
 #define _APS_NEXT_RESOURCE_VALUE        137
 #define _APS_NEXT_COMMAND_VALUE         32771
-#define _APS_NEXT_CONTROL_VALUE         1010
+#define _APS_NEXT_CONTROL_VALUE         1012
 #define _APS_NEXT_SYMED_VALUE           101
 #endif
 #endif

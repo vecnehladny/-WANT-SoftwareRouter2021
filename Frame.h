@@ -13,8 +13,15 @@ enum FRAME_TYPE {
 };
 
 struct ipAddressStructure {
-	BYTE octets[4];
-	BYTE mask;
+	union {
+
+		BYTE octets[4];
+		BYTE dw;
+	};
+	union {
+		BYTE mask;
+		BYTE hasNextHop;
+	};
 };
 
 struct frame {

@@ -22,7 +22,8 @@ END_MESSAGE_MAP()
 
 // CsoftwareRouterApp construction
 
-CsoftwareRouterApp::CsoftwareRouterApp()
+CsoftwareRouterApp::CsoftwareRouterApp() :
+	routingTable(NULL)
 {
 	// support Restart Manager
 	m_dwRestartManagerSupportFlags = AFX_RESTART_MANAGER_SUPPORT_RESTART;
@@ -74,6 +75,7 @@ BOOL CsoftwareRouterApp::InitInstance()
 
 	interface1 = new Interface(1);
 	interface2 = new Interface(2);
+	routingTable = new RoutingTable();
 
 	CSetIntDlg setIntDlg;
 	INT_PTR nResponse = setIntDlg.DoModal();
@@ -123,5 +125,10 @@ Interface* CsoftwareRouterApp::getInterface(int id){
 CsoftwareRouterDlg* CsoftwareRouterApp::getSoftwareRouterDialog()
 {
 	return (CsoftwareRouterDlg*)m_pMainWnd;
+}
+
+RoutingTable* CsoftwareRouterApp::getRoutingTable() 
+{
+	return routingTable;
 }
 

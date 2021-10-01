@@ -48,6 +48,9 @@
     <ClInclude Include="ProtocolStorage.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="RoutingTable.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="softwareRouter.cpp">
@@ -72,6 +75,9 @@
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="ProtocolStorage.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="RoutingTable.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>
