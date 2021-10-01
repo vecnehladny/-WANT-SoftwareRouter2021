@@ -10,6 +10,7 @@
 
 #include "resource.h"		// main symbols
 #include "softwareRouterDlg.h"
+#include "ProtocolStorage.h"
 
 
 // CsoftwareRouterApp:

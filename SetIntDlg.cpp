@@ -38,6 +38,12 @@ BOOL CSetIntDlg::OnInitDialog()
 	CDialog::OnInitDialog();
 
 	PIP_ADAPTER_ADDRESSES currentAdapter;
+	CString validationResult = ProtocolStorage::getInstance()->validateFiles();
+
+	if (validationResult.IsEmpty() == FALSE) {
+		AfxMessageBox(validationResult, MB_ICONERROR);
+		OnCancel();
+	}
 
 	if (getAdaptersList() != NO_ERROR) {
 		MessageBox(
