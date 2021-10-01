@@ -70,6 +70,7 @@ void CsoftwareRouterDlg::DoDataExchange(CDataExchange* pDX)
 	DDX_Control(pDX, IDC_INT2DEVICENAME, int2DeviceNameText);
 	DDX_Control(pDX, IDC_INT2SETIPBTN, int2SetIpButton);
 	DDX_Control(pDX, IDC_INT2ENABLEBTN, int2EnableButton);
+	DDX_Control(pDX, IDC_ROUTINGTABLE, routingTableBox);
 }
 
 BEGIN_MESSAGE_MAP(CsoftwareRouterDlg, CDialogEx)
@@ -81,6 +82,11 @@ BEGIN_MESSAGE_MAP(CsoftwareRouterDlg, CDialogEx)
 	ON_MESSAGE(WM_SETIP_MESSAGE, &CsoftwareRouterDlg::onSetIpMessage)
 	ON_BN_CLICKED(IDC_INT1SETIPBTN, &CsoftwareRouterDlg::onInt1SetIpButtonClicked)
 	ON_BN_CLICKED(IDC_INT2SETIPBTN, &CsoftwareRouterDlg::onInt2SetIpButtonClicked)
+	ON_MESSAGE(WM_ADDROUTE_MESSAGE, &CsoftwareRouterDlg::onAddRouteMessage)
+	ON_MESSAGE(WM_REMOVEROUTE_MESSAGE, &CsoftwareRouterDlg::onRemoveRouteMessage)
+	ON_BN_CLICKED(IDC_ROUTINGTABLEADD, &CsoftwareRouterDlg::onAddStaticRouteButtonClicked)
+	ON_BN_CLICKED(IDC_ROUTINGTABLEREMOVE, &CsoftwareRouterDlg::onRemoveStaticRouteButtonClicked)
+
 END_MESSAGE_MAP()
 
 
@@ -117,6 +123,7 @@ BOOL CsoftwareRouterDlg::OnInitDialog()
 
 	// TODO: Add extra initialization here
 	initInterfacesInfos();
+	initRoutingTable();
 
 	return TRUE;  // return TRUE  unless you set the focus to a control
 }
@@ -188,6 +195,7 @@ void CsoftwareRouterDlg::enableInterface(Interface* i, CMFCButton* enableButton)
 	}
 
 	i->enable();
+	theApp.getRoutingTable()->addConnection(i, TRUE);
 	enableButton->SetWindowTextW(_T("Disable"));
 }
 
@@ -195,6 +203,7 @@ void CsoftwareRouterDlg::enableInterface(Interface* i, CMFCButton* enableButton)
 void CsoftwareRouterDlg::disableInterface(Interface* i, CMFCButton* disableButton)
 {
 	i->disable();
+	theApp.getRoutingTable()->removeConnection(i, TRUE);
 	disableButton->SetWindowTextW(_T("Enable"));
 }
 
@@ -228,6 +237,11 @@ void CsoftwareRouterDlg::setIpAddr(Interface* i, ipAddressStructure newIpAddress
 {
 	i->setIpAddress(newIpAddressStruct);
 	SendMessage(WM_SETIP_MESSAGE, 0, (LPARAM)i);
+	if (i->isEnabled())
+	{
+		theApp.getRoutingTable()->removeConnection(i, TRUE);
+		theApp.getRoutingTable()->addConnection(i, TRUE);
+	}
 }
 
 afx_msg LRESULT CsoftwareRouterDlg::onSetIpMessage(WPARAM wParam, LPARAM lParam)
@@ -257,4 +271,131 @@ UINT CsoftwareRouterDlg::editIpAddrThread(void* pParam)
 	setIpDlg.DoModal();
 
 	return 0;
+}
+
+void CsoftwareRouterDlg::initRoutingTable(void)
+{
+	routingTableBox.SetExtendedStyle(routingTableBox.GetExtendedStyle() | LVS_EX_FULLROWSELECT | LVS_EX_GRIDLINES);
+	routingTableBox.InsertColumn(0, _T("Type"), LVCFMT_CENTER, 36);
+	routingTableBox.InsertColumn(1, _T("Network"), LVCFMT_CENTER, 112);
+	routingTableBox.InsertColumn(2, _T("AD"), LVCFMT_CENTER, 30);
+	routingTableBox.InsertColumn(3, _T("Metric"), LVCFMT_CENTER, 41);
+	routingTableBox.InsertColumn(4, _T("Next Hop"), LVCFMT_CENTER, 112);
+	routingTableBox.InsertColumn(5, _T("Interface"), LVCFMT_CENTER, 57);
+}
+
+
+void CsoftwareRouterDlg::autoResizeCols(CListCtrl* control)
+{
+	int i, ColumnWidth, HeaderWidth;
+	int columns = control->GetHeaderCtrl()->GetItemCount();
+
+	control->SetRedraw(FALSE);
+	for (i = 0; i < columns; i++)
+	{
+		control->SetColumnWidth(i, LVSCW_AUTOSIZE);
+		ColumnWidth = control->GetColumnWidth(i);
+		control->SetColumnWidth(i, LVSCW_AUTOSIZE_USEHEADER);
+		HeaderWidth = control->GetColumnWidth(i);
+		control->SetColumnWidth(i, max(ColumnWidth, HeaderWidth));
+	}
+	control->SetRedraw(TRUE);
+}
+
+void CsoftwareRouterDlg::addRoute(int index, routeStructure& r)
+{
+	int* indexptr = (int*)malloc(sizeof(int));
+	routeStructure* rptr = (routeStructure*)malloc(sizeof(routeStructure));
+	*indexptr = index;
+	*rptr = r;
+	SendMessage(WM_ADDROUTE_MESSAGE, (WPARAM)indexptr, (LPARAM)rptr);
+}
+
+
+afx_msg LRESULT CsoftwareRouterDlg::onAddRouteMessage(WPARAM wParam, LPARAM lParam)
+{
+	int* index = (int*)wParam;
+	routeStructure* r = (routeStructure*)lParam;
+	CString tmp;
+
+	switch (r->type)
+	{
+	case CONNECTED:
+		tmp.Format(_T("C"));
+		break;
+
+	case STATIC:
+		tmp.Format(_T("S"));
+		break;
+
+	case RIP:
+		tmp.Format(_T("R"));
+		break;
+	}
+	if ((r->prefix.dw == 0) && (r->prefix.mask == 0)) tmp.AppendFormat(_T("*"));
+	routingTableBox.InsertItem(*index, tmp);
+
+	tmp.Format(
+		_T("%u.%u.%u.%u/%u"), 
+		r->prefix.octets[3],
+		r->prefix.octets[2],
+		r->prefix.octets[1],
+		r->prefix.octets[0],
+		r->prefix.mask);
+	routingTableBox.SetItemText(*index, 1, tmp);
+
+	tmp.Format(_T("%u"), r->administrativeDistance);
+	routingTableBox.SetItemText(*index, 2, tmp);
+
+	tmp.Format(_T("%u"), r->metric);
+	routingTableBox.SetItemText(*index, 3, tmp);
+
+	if (r->NextHop.hasNextHop) { 
+		tmp.Format(
+			_T("%u.%u.%u.%u"), 
+			r->NextHop.octets[3],
+			r->NextHop.octets[2],
+			r->NextHop.octets[1],
+			r->NextHop.octets[0]); 
+	}
+	else { 
+		tmp.Format(_T("-")); 
+	}
+	routingTableBox.SetItemText(*index, 4, tmp);
+
+	if (!r->i) tmp.Format(_T("-"));
+	else tmp.Format(_T("Int %d"), r->i->getId());
+	routingTableBox.SetItemText(*index, 5, tmp);
+
+	free(index);
+	free(r);
+
+	return 0;
+}
+
+
+void CsoftwareRouterDlg::removeRoute(int index)
+{
+	int* indexptr = (int*)malloc(sizeof(int));
+
+	*indexptr = index;
+	SendMessage(WM_REMOVEROUTE_MESSAGE, 0, (LPARAM)indexptr);
+}
+
+
+afx_msg LRESULT CsoftwareRouterDlg::onRemoveRouteMessage(WPARAM wParam, LPARAM lParam)
+{
+	int* index = (int*)lParam;
+
+	routingTableBox.DeleteItem(*index);
+	free(index);
+
+	return 0;
+}
+
+afx_msg void CsoftwareRouterDlg::onAddStaticRouteButtonClicked() 
+{
+}
+afx_msg void CsoftwareRouterDlg::onRemoveStaticRouteButtonClicked() 
+{
 }

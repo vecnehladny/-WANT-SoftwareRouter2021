@@ -5,8 +5,6 @@
 #include "Frame.h"
 
 
-// IPAddrDlg dialog
-
 IMPLEMENT_DYNAMIC(SetIpDlg, CDialog)
 
 SetIpDlg::SetIpDlg(Interface* i, CWnd* pParent /*=NULL*/)

@@ -183,6 +183,7 @@
     </ResourceCompile>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClInclude Include="AddStaticRouteDlg.h" />
     <ClInclude Include="Frame.h" />
     <ClInclude Include="framework.h" />
     <ClInclude Include="Interface.h" />
@@ -190,6 +191,7 @@
     <ClInclude Include="ProtocolStorage.h" />
     <ClInclude Include="Resource.h" />
     <ClInclude Include="RoutingTable.h" />
+    <ClInclude Include="RoutingTableListCtrl.h" />
     <ClInclude Include="SetIntDlg.h" />
     <ClInclude Include="SetIpDlg.h" />
     <ClInclude Include="softwareRouter.h" />
@@ -197,6 +199,7 @@
     <ClInclude Include="targetver.h" />
   </ItemGroup>
   <ItemGroup>
+    <ClCompile Include="AddStaticRouteDlg.cpp" />
     <ClCompile Include="Frame.cpp" />
     <ClCompile Include="Interface.cpp" />
     <ClCompile Include="pch.cpp">
@@ -207,6 +210,7 @@
     </ClCompile>
     <ClCompile Include="ProtocolStorage.cpp" />
     <ClCompile Include="RoutingTable.cpp" />
+    <ClCompile Include="RoutingTableListCtrl.cpp" />
     <ClCompile Include="SetIntDlg.cpp" />
     <ClCompile Include="SetIpDlg.cpp" />
     <ClCompile Include="softwareRouter.cpp" />

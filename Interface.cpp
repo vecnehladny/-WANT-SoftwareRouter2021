@@ -150,6 +150,10 @@ ipAddressStructure Interface::getPrefixStruct(void)
 {
 	ipAddressStructure prefix;
 
+	prefix.octets[0] = ipAddressStruct.octets[0];
+	prefix.octets[1] = ipAddressStruct.octets[1];
+	prefix.octets[2] = ipAddressStruct.octets[2];
+	prefix.octets[3] = ipAddressStruct.octets[3];
 	prefix.dw = (ipAddressStruct.dw >> (32 - ipAddressStruct.mask)) << (32 - ipAddressStruct.mask);
 	prefix.mask = ipAddressStruct.mask;
 

@@ -6,10 +6,13 @@
 #include "afxwin.h"
 #include "afxbutton.h"
 #include "Interface.h"
+#include "RoutingTableListCtrl.h"
 #include "ProtocolStorage.h"
 #include "RoutingTable.h"
 
 #define WM_SETIP_MESSAGE WM_APP+100
+#define WM_ADDROUTE_MESSAGE WM_APP+101
+#define WM_REMOVEROUTE_MESSAGE WM_APP+102
 
 
 // CsoftwareRouterDlg dialog
@@ -52,20 +55,31 @@ private:
 	CMFCButton int2SetIpButton;
 	CMFCButton int2EnableButton;
 
+	CRoutingTableListCtrl routingTableBox;
+
+	void autoResizeCols(CListCtrl* control);
 	void initInterfacesInfos();
+	void initRoutingTable();
 
 public:
 	void setIpAddr(Interface* i, ipAddressStructure newIpAddressStruct);
 	void enableInterface(Interface* i, CMFCButton* enableButton);
 	void disableInterface(Interface* i, CMFCButton* disableButton);
 	static UINT editIpAddrThread(void* pParam);
+	static UINT editRouteThread(void* pParam);
+	void addRoute(int index, routeStructure& r);
+	void removeRoute(int index);
 
 public:
 	afx_msg void onInt1SetIpButtonClicked();
 	afx_msg void onInt2SetIpButtonClicked();
 	afx_msg void onInt1EnableButtonClicked();
 	afx_msg void onInt2EnableButtonClicked();
+	afx_msg void onAddStaticRouteButtonClicked();
+	afx_msg void onRemoveStaticRouteButtonClicked();
 
 protected:
 	afx_msg LRESULT onSetIpMessage(WPARAM wParam, LPARAM lParam);
+	afx_msg LRESULT onAddRouteMessage(WPARAM wParam, LPARAM lParam);
+	afx_msg LRESULT onRemoveRouteMessage(WPARAM wParam, LPARAM lParam);
 };
