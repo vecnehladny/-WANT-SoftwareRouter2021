@@ -118,12 +118,12 @@ void AddStaticRouteDlg::onAddButtonClicked()
 {
 	routeStructure newRoute;
 	DWORD dwAddr;
-	BYTE cidr_field = (BYTE)GetDlgItemInt(IDC_ADDSTATICROUTEMASKCIDR, NULL, 0);
-	BYTE AD_field = (BYTE)GetDlgItemInt(IDC_ADDSTATICROUTEAD, NULL, 0);
+	BYTE cidr = (BYTE)GetDlgItemInt(IDC_ADDSTATICROUTEMASKCIDR, NULL, 0);
+	BYTE ad = (BYTE)GetDlgItemInt(IDC_ADDSTATICROUTEAD, NULL, 0);
 
 	newRoute.prefix.mask = getCidr();
 
-	if ((newRoute.prefix.mask == INVALID_CIDR) || (cidr_field < 0) || (cidr_field > 32))
+	if ((newRoute.prefix.mask == INVALID_CIDR) || (cidr < 0) || (cidr > 32))
 	{
 		AfxMessageBox(_T("Mask is invalid"));
 		return;
@@ -137,7 +137,7 @@ void AddStaticRouteDlg::onAddButtonClicked()
 		return;
 	}
 
-	if ((AD_field < 1) || (AD_field > 254))
+	if ((ad < 1) || (ad > 254))
 	{
 		AfxMessageBox(_T("Administrative distance is invalid"));
 		return;
@@ -146,7 +146,7 @@ void AddStaticRouteDlg::onAddButtonClicked()
 	prefixBox.GetAddress(newRoute.prefix.octets[3], newRoute.prefix.octets[2], newRoute.prefix.octets[1], newRoute.prefix.octets[0]);
 
 	newRoute.type = STATIC;
-	newRoute.administrativeDistance = AD_field;
+	newRoute.administrativeDistance = ad;
 	newRoute.metric = 0;
 
 	if (interfaceComboBox.GetCurSel() == 0)

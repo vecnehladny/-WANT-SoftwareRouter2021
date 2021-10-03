@@ -9,6 +9,7 @@
 #include "RoutingTableListCtrl.h"
 #include "ProtocolStorage.h"
 #include "RoutingTable.h"
+#include "AddStaticRouteDlg.h"
 
 #define WM_SETIP_MESSAGE WM_APP+100
 #define WM_ADDROUTE_MESSAGE WM_APP+101

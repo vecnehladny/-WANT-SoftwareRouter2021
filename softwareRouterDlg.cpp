@@ -393,7 +393,28 @@ afx_msg LRESULT CsoftwareRouterDlg::onRemoveRouteMessage(WPARAM wParam, LPARAM l
 
 afx_msg void CsoftwareRouterDlg::onAddStaticRouteButtonClicked() 
 {
+	AfxBeginThread(CsoftwareRouterDlg::editRouteThread, NULL);
 }
 afx_msg void CsoftwareRouterDlg::onRemoveStaticRouteButtonClicked() 
 {
+	int selected = routingTableBox.GetSelectionMark();
+
+	if (selected == -1) {
+		AfxMessageBox(_TEXT("Select route which you want to remove"));
+	}
+	else {
+		if (theApp.getRoutingTable()->removeRoute(selected)) {
+			AfxMessageBox(_TEXT("Select static route"));
+		}
+	}
+}
+
+UINT CsoftwareRouterDlg::editRouteThread(void* pParam) 
+{
+	AddStaticRouteDlg addStaticRouteDialog;
+
+	addStaticRouteDialog.DoModal();
+
+	return 0;
+
 }
