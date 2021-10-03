@@ -2,10 +2,6 @@
 
 #include "Frame.h"
 
-struct macAddressStructure {
-	BYTE b[6];
-};
-
 class Interface {
 public:
 	Interface(int id);

@@ -10,8 +10,8 @@ Interface::Interface(int id)
 {
 	int i;
 
-	for (i = 0; i < 6; i++) macAddressStruct.b[i] = 0x00;
-	for (i = 0; i < 4; i++) macAddressStruct.b[i] = 0x00;
+	for (i = 0; i < 6; i++) macAddressStruct.section[i] = 0x00;
+	for (i = 0; i < 4; i++) macAddressStruct.section[i] = 0x00;
 	ipAddressStruct.mask = 0;
 }
 
@@ -84,7 +84,7 @@ void Interface::setMacAddress(PBYTE macAddress)
 		else {
 			this->macAddress.AppendFormat(_T("%.2X-"), (int)macAddress[i]);
 		}
-		this->macAddressStruct.b[i] = macAddress[i];
+		this->macAddressStruct.section[i] = macAddress[i];
 	}
 }
 
