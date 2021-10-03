@@ -275,30 +275,28 @@ UINT CsoftwareRouterDlg::editIpAddrThread(void* pParam)
 
 void CsoftwareRouterDlg::initRoutingTable(void)
 {
-	routingTableBox.SetExtendedStyle(routingTableBox.GetExtendedStyle() | LVS_EX_FULLROWSELECT | LVS_EX_GRIDLINES);
+	routingTableBox.SetExtendedStyle(routingTableBox.GetExtendedStyle() | LVS_EX_FULLROWSELECT | LVS_EX_GRIDLINES | LVS_EX_AUTOSIZECOLUMNS);
 	routingTableBox.InsertColumn(0, _T("Type"), LVCFMT_CENTER, 36);
 	routingTableBox.InsertColumn(1, _T("Network"), LVCFMT_CENTER, 112);
 	routingTableBox.InsertColumn(2, _T("AD"), LVCFMT_CENTER, 30);
 	routingTableBox.InsertColumn(3, _T("Metric"), LVCFMT_CENTER, 41);
 	routingTableBox.InsertColumn(4, _T("Next Hop"), LVCFMT_CENTER, 112);
 	routingTableBox.InsertColumn(5, _T("Interface"), LVCFMT_CENTER, 57);
+	autoResizeCols(&routingTableBox);
 }
 
 
 void CsoftwareRouterDlg::autoResizeCols(CListCtrl* control)
 {
-	int i, ColumnWidth, HeaderWidth;
 	int columns = control->GetHeaderCtrl()->GetItemCount();
 
 	control->SetRedraw(FALSE);
-	for (i = 0; i < columns; i++)
-	{
-		control->SetColumnWidth(i, LVSCW_AUTOSIZE);
-		ColumnWidth = control->GetColumnWidth(i);
-		control->SetColumnWidth(i, LVSCW_AUTOSIZE_USEHEADER);
-		HeaderWidth = control->GetColumnWidth(i);
-		control->SetColumnWidth(i, max(ColumnWidth, HeaderWidth));
-	}
+	control->SetColumnWidth(0, LVSCW_AUTOSIZE_USEHEADER);
+	control->SetColumnWidth(1, 200);
+	control->SetColumnWidth(2, LVSCW_AUTOSIZE_USEHEADER);
+	control->SetColumnWidth(3, LVSCW_AUTOSIZE_USEHEADER);
+	control->SetColumnWidth(4, 200);
+	control->SetColumnWidth(5, LVSCW_AUTOSIZE_USEHEADER);
 	control->SetRedraw(TRUE);
 }
 
