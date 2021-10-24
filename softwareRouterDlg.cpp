@@ -71,6 +71,11 @@ void CsoftwareRouterDlg::DoDataExchange(CDataExchange* pDX)
 	DDX_Control(pDX, IDC_INT2SETIPBTN, int2SetIpButton);
 	DDX_Control(pDX, IDC_INT2ENABLEBTN, int2EnableButton);
 	DDX_Control(pDX, IDC_ROUTINGTABLE, routingTableBox);
+	DDX_Control(pDX, IDC_ARPTABLE, arpTableBox);
+	DDX_Control(pDX, IDC_ROUTINGTABLEADD, addRouteButton);
+	DDX_Control(pDX, IDC_ROUTINGTABLEREMOVE, removeRouteButton);
+	DDX_Control(pDX, IDC_ARPTABLECLEAR, clearArpTableButton);
+	DDX_Control(pDX, IDC_ARPTABLESENDREQUEST, sendArpRequestButton);
 }
 
 BEGIN_MESSAGE_MAP(CsoftwareRouterDlg, CDialogEx)
@@ -86,7 +91,11 @@ BEGIN_MESSAGE_MAP(CsoftwareRouterDlg, CDialogEx)
 	ON_MESSAGE(WM_REMOVEROUTE_MESSAGE, &CsoftwareRouterDlg::onRemoveRouteMessage)
 	ON_BN_CLICKED(IDC_ROUTINGTABLEADD, &CsoftwareRouterDlg::onAddStaticRouteButtonClicked)
 	ON_BN_CLICKED(IDC_ROUTINGTABLEREMOVE, &CsoftwareRouterDlg::onRemoveStaticRouteButtonClicked)
-
+	ON_BN_CLICKED(IDC_ARPTABLECLEAR, &CsoftwareRouterDlg::onClearArpTableButtonClicked)
+	ON_BN_CLICKED(IDC_ARPTABLESENDREQUEST, &CsoftwareRouterDlg::onSendArpRequestButtonClicked)
+	ON_MESSAGE(WM_ADDARP_MESSAGE, &CsoftwareRouterDlg::onAddArp)
+	ON_MESSAGE(WM_REMOVEARP_MESSAGE, &CsoftwareRouterDlg::onRemoveArp)
+	ON_MESSAGE(WM_SENDARPREQUEST_MESSAGE, &CsoftwareRouterDlg::onSendArpRequest)
 END_MESSAGE_MAP()
 
 
@@ -124,6 +133,9 @@ BOOL CsoftwareRouterDlg::OnInitDialog()
 	// TODO: Add extra initialization here
 	initInterfacesInfos();
 	initRoutingTable();
+	initArpTable();
+	theApp.startThreads();
+	sendArpRequestButton.SetTextColor(RGB(255, 0, 0));
 
 	return TRUE;  // return TRUE  unless you set the focus to a control
 }
@@ -195,7 +207,6 @@ void CsoftwareRouterDlg::enableInterface(Interface* i, CMFCButton* enableButton)
 	}
 
 	i->enable();
-	theApp.getRoutingTable()->addConnection(i, TRUE);
 	enableButton->SetWindowTextW(_T("Disable"));
 }
 
@@ -203,7 +214,6 @@ void CsoftwareRouterDlg::enableInterface(Interface* i, CMFCButton* enableButton)
 void CsoftwareRouterDlg::disableInterface(Interface* i, CMFCButton* disableButton)
 {
 	i->disable();
-	theApp.getRoutingTable()->removeConnection(i, TRUE);
 	disableButton->SetWindowTextW(_T("Enable"));
 }
 
@@ -239,8 +249,8 @@ void CsoftwareRouterDlg::setIpAddr(Interface* i, ipAddressStructure newIpAddress
 	SendMessage(WM_SETIP_MESSAGE, 0, (LPARAM)i);
 	if (i->isEnabled())
 	{
-		theApp.getRoutingTable()->removeConnection(i, TRUE);
-		theApp.getRoutingTable()->addConnection(i, TRUE);
+		i->disable();
+		i->enable();
 	}
 }
 
@@ -362,6 +372,7 @@ afx_msg LRESULT CsoftwareRouterDlg::onAddRouteMessage(WPARAM wParam, LPARAM lPar
 	routingTableBox.SetItemText(*index, 4, tmp);
 
 	if (!r->i) tmp.Format(_T("-"));
+	else if (r->NextHop.hasNextHop) tmp.Format(_T("\"Int %d\""), r->i->getId());
 	else tmp.Format(_T("Int %d"), r->i->getId());
 	routingTableBox.SetItemText(*index, 5, tmp);
 
@@ -417,4 +428,90 @@ UINT CsoftwareRouterDlg::editRouteThread(void* pParam)
 
 	return 0;
 
+}
+
+
+void CsoftwareRouterDlg::initArpTable(void)
+{
+	arpTableBox.SetExtendedStyle(arpTableBox.GetExtendedStyle() | LVS_EX_FULLROWSELECT | LVS_EX_GRIDLINES);
+	arpTableBox.InsertColumn(0, _T("IP address"), LVCFMT_CENTER, 100);
+	arpTableBox.InsertColumn(1, _T("MAC address"), LVCFMT_CENTER, 120);
+
+	theApp.getArpTable()->initArpTable();
+}
+
+
+void CsoftwareRouterDlg::onClearArpTableButtonClicked()
+{
+	theApp.getArpTable()->clearArpTable();
+}
+
+void CsoftwareRouterDlg::addArp(int index, arpStructure& entry)
+{
+	int* indexptr = (int*)malloc(sizeof(int));
+	arpStructure* entryptr = (arpStructure*)malloc(sizeof(arpStructure));
+	*indexptr = index;
+	*entryptr = entry;
+	SendMessage(WM_ADDARP_MESSAGE, (WPARAM)indexptr, (LPARAM)entryptr);
+}
+
+
+afx_msg LRESULT CsoftwareRouterDlg::onAddArp(WPARAM wParam, LPARAM lParam)
+{
+	int* index = (int*)wParam;
+	arpStructure* entry = (arpStructure*)lParam;
+	CString tmp;
+
+	tmp.Format(_T("%u.%u.%u.%u"), entry->ipAddress.octets[3], entry->ipAddress.octets[2], entry->ipAddress.octets[1], entry->ipAddress.octets[0]);
+	arpTableBox.InsertItem(*index, tmp);
+
+	tmp.Format(_T("%.2X:%.2X:%.2X:%.2X:%.2X:%.2X"), entry->macAddress.section[0], entry->macAddress.section[1], entry->macAddress.section[2], entry->macAddress.section[3], entry->macAddress.section[4], entry->macAddress.section[5]);
+	arpTableBox.SetItemText(*index, 1, tmp);
+
+	free(index);
+	free(entry);
+
+	return 0;
+}
+
+
+void CsoftwareRouterDlg::removeArp(int index)
+{
+	int* indexptr = (int*)malloc(sizeof(int));
+
+	*indexptr = index;
+	SendMessage(WM_REMOVEARP_MESSAGE, 0, (LPARAM)indexptr);
+}
+
+
+afx_msg LRESULT CsoftwareRouterDlg::onRemoveArp(WPARAM wParam, LPARAM lParam)
+{
+	int* index = (int*)lParam;
+
+	arpTableBox.DeleteItem(*index);
+	free(index);
+
+	return 0;
+}
+
+
+LRESULT CsoftwareRouterDlg::onSendArpRequest(WPARAM wParam, LPARAM lParam)
+{
+	return LRESULT();
+}
+
+
+void CsoftwareRouterDlg::onSendArpRequestButtonClicked()
+{
+	ipAddressStructure* toSend = (ipAddressStructure*)malloc(sizeof(ipAddressStructure));
+	*toSend = theApp.getInterface(1)->getIpAddressStruct();
+
+	toSend->octets[0] = BYTE(0x0001);
+
+	theApp.getArpTable()->sendArpRequest(*toSend, theApp.getInterface(1));
+}
+
+
+void CsoftwareRouterDlg::sendArpRequest()
+{
 }

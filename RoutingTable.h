@@ -32,5 +32,6 @@ public:
 	int isDefault(routeStructure& r);
 	void addRoute(routeStructure r);
 	int removeRoute(int index);
-	Interface* findInterface(ipAddressStructure& address);
+	CCriticalSection criticalSectionTable;
+	Interface* doLookup(ipAddressStructure& address, ipAddressStructure** NextHop = NULL);
 };

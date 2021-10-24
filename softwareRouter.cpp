@@ -76,6 +76,7 @@ BOOL CsoftwareRouterApp::InitInstance()
 	interface1 = new Interface(1);
 	interface2 = new Interface(2);
 	routingTable = new RoutingTable();
+	arpTable = new ArpTable();
 
 	CSetIntDlg setIntDlg;
 	INT_PTR nResponse = setIntDlg.DoModal();
@@ -130,5 +131,134 @@ CsoftwareRouterDlg* CsoftwareRouterApp::getSoftwareRouterDialog()
 RoutingTable* CsoftwareRouterApp::getRoutingTable() 
 {
 	return routingTable;
+}
+
+
+ArpTable* CsoftwareRouterApp::getArpTable(void)
+{
+	return arpTable;
+}
+
+
+UINT CsoftwareRouterApp::routingProcess(void* pParam)
+{
+	Interface* intface = (Interface*)pParam;
+	Interface* outInterface;
+	Frame* buffer = intface->getFrames();
+	Frame TTLex;
+	RoutingTable* routingTab = theApp.getRoutingTable();
+	ArpTable* arpTab = theApp.getArpTable();
+	int retval = 0;
+	macAddressStructure sourceMac, destinationMac, localMac = intface->getMacAddressStruct();
+	ipAddressStructure destinationIp, nextHop, * nextHopPointer;
+
+	while (TRUE)
+	{
+		buffer->getFrame();
+
+		sourceMac = buffer->getSourceMacAddress();
+		if (theApp.compareMac(sourceMac, localMac) == 0) continue;
+		destinationMac = buffer->getDestinationMacAddress();
+		if (theApp.compareMac(sourceMac, destinationMac) == 0) continue;
+		if (theApp.isBroadcast(sourceMac)) continue;
+		if ((theApp.compareMac(destinationMac, localMac) == 1) && (theApp.isBroadcast(destinationMac) == 0))
+		{
+			continue;
+		}
+
+		if (buffer->getLayer3Type() == 0x0806)
+		{
+			if (buffer->isReplyArp()) arpTab->proccessArpReply(buffer, intface);
+			if (buffer->isRequestArp()) arpTab->replyToArpRequest(buffer, intface);
+			continue;
+		}
+
+		if (buffer->getLayer3Type() != 0x0800) continue;
+		if (!buffer->isIcmpChecksumValid()) continue;
+
+		buffer->decTtl();
+		if (buffer->getTtl() == 0)
+		{
+			TTLex.generateTtlExceeded(buffer, intface->getIpAddressStruct(), intface->generateIpHeaderId());
+			intface->sendFrame(&TTLex, NULL, FALSE);
+			TTLex.clear();
+			continue;
+		}
+
+		destinationIp = buffer->getDestinationIpAddress();
+		if ((theApp.getInterface(1)->isIpLocal(destinationIp)) || (theApp.getInterface(2)->isIpLocal(destinationIp)))
+		{
+			if ((buffer->isIcmpEchoRequest()) && (buffer->isIcmpChecksumValid()))
+			{
+				buffer->generateIcmpEchoReply(destinationIp);
+				intface->sendFrame(buffer, NULL, FALSE);
+			}
+			continue;
+		}
+	}
+
+	return 0;
+}
+
+
+void CsoftwareRouterApp::startThreads(void)
+{
+	//AfxBeginThread(CsoftwareRouterApp::routingProcess, interface1);
+	//AfxBeginThread(CsoftwareRouterApp::routingProcess, interface2);
+	AfxBeginThread(CsoftwareRouterApp::arpProcess, interface1);
+	//AfxBeginThread(CsoftwareRouterApp::arpProcess, interface2);
+}
+
+
+int CsoftwareRouterApp::compareMac(macAddressStructure& mac1, macAddressStructure& mac2)
+{
+	for (int i = 0; i < 6; i++) {
+		if (mac1.section[i] != mac2.section[i]) {
+			return 1;
+		}
+	}
+
+	return 0;
+}
+
+
+int CsoftwareRouterApp::isBroadcast(macAddressStructure& address)
+{
+	for (int i = 0; i < 6; i++) {
+		if (address.section[i] != 0xFF) {
+			return 0;
+		}
+	}
+
+	return 1;
+}
+
+
+UINT CsoftwareRouterApp::arpProcess(void* pParam)
+{
+	Interface* intface = (Interface*)pParam;
+	Frame* buffer = intface->getFrames();
+	ArpTable* arpTab = theApp.getArpTable();
+	macAddressStructure sourceMac, destinationMac, localMac = intface->getMacAddressStruct();
+
+	while (TRUE)
+	{
+		buffer->getFrame();
+
+		sourceMac = buffer->getSourceMacAddress();
+		if (theApp.compareMac(sourceMac, localMac) == 0) continue;
+		destinationMac = buffer->getDestinationMacAddress();
+
+		if (buffer->getLayer3Type() == 0x0806)
+		{
+			if (buffer->isReplyArp()) arpTab->proccessArpReply(buffer, intface);
+			if (buffer->isRequestArp()) arpTab->replyToArpRequest(buffer, intface);
+			continue;
+		}
+
+		continue;
+	}
+
+	return 0;
 }
 

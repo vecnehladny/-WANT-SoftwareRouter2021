@@ -1,6 +1,7 @@
 #pragma once
 
 #include "Frame.h"
+#include <pcap.h>
 
 class Interface {
 public:
@@ -17,6 +18,13 @@ private:
 	BOOL enabled;
 	BOOL ipAddressIsSet;
 	Frame* frames;
+	WORD ipHeaderId;
+	pcap_t* handle;
+	CCriticalSection criticalSectionEnabling;
+	CCriticalSection criticalSectionIp;
+	CCriticalSection criticalSectionHandle;
+	CCriticalSection criticalSectionSend;
+	ipAddressStructure prefixStruct;
 
 public:
 	int getId();
@@ -38,4 +46,15 @@ public:
 	BYTE getMask();
 	CString getPrefix(void);
 	ipAddressStructure getPrefixStruct(void);
+	void setPrefix(void);
+	ipAddressStructure getBroadcastIPAddress(void);
+	int isIpLocal(ipAddressStructure& ip);
+	int isIpInLocalNetwork(ipAddressStructure& ip);
+	WORD generateIpHeaderId(void);
+	int openAdapter(void);
+	pcap_t* getPcapHandle(void);
+	void startReceive(void);
+	static UINT receiveThread(void* pParam);
+	int sendFrame(Frame* buffer, ipAddressStructure* NextHop = NULL, BOOL UseARP = TRUE);
+	Frame* getFrames(void);
 };

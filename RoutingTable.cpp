@@ -24,10 +24,13 @@ void RoutingTable::addConnection(Interface* i, BOOL isDirect)
 	newRoute.i = i;
 
 	if (isDirect) {
+		criticalSectionTable.Lock();
 		if (routes.IsEmpty())
 		{
 			routes.Add(newRoute);
 			theApp.getSoftwareRouterDialog()->addRoute(0, newRoute);
+			criticalSectionTable.Unlock();
+			return;
 		}
 
 		else if ((routes[0].type != CONNECTED)
@@ -36,6 +39,8 @@ void RoutingTable::addConnection(Interface* i, BOOL isDirect)
 		{
 			routes.InsertAt(0, newRoute);
 			theApp.getSoftwareRouterDialog()->addRoute(0, newRoute);
+			criticalSectionTable.Unlock();
+			return;
 		}
 
 		else
@@ -49,6 +54,7 @@ void RoutingTable::addConnection(Interface* i, BOOL isDirect)
 				routes.InsertAt(1, newRoute);
 			}
 			theApp.getSoftwareRouterDialog()->addRoute(1, newRoute);
+			criticalSectionTable.Lock();
 		}
 	}
 }
@@ -56,16 +62,16 @@ void RoutingTable::addConnection(Interface* i, BOOL isDirect)
 
 void RoutingTable::removeConnection(Interface* i, BOOL isDirect)
 {
-	int j;
-
 	if (isDirect) {
-		for (j = 0; j < routes.GetCount(); j++)
+		criticalSectionTable.Lock();
+		for (int j = 0; j < routes.GetCount(); j++)
 			if ((routes[j].type == CONNECTED) && (routes[j].i->getId() == i->getId()))
 			{
 				routes.RemoveAt(j);
 				theApp.getSoftwareRouterDialog()->removeRoute(j);
 				break;
 			}
+		criticalSectionTable.Unlock();
 	}
 }
 
@@ -94,12 +100,27 @@ int RoutingTable::isDefault(routeStructure& r)
 }
 
 
-Interface* RoutingTable::findInterface(ipAddressStructure& address)
+Interface* RoutingTable::doLookup(ipAddressStructure& address, ipAddressStructure** nexthop)
 {
-	int i;
+	Interface* foundInterface;
 
-	for (i = 0; i < routes.GetCount(); i++)
-		if (matchPrefixes(address, routes[i].prefix)) return routes[i].i;
+	for (int i = 0; i < routes.GetCount(); i++)
+		if (matchPrefixes(address, routes[i].prefix))
+		{
+			if (routes[i].NextHop.hasNextHop)
+			{
+				if (nexthop) *nexthop = &routes[i].NextHop;
+				foundInterface = doLookup(routes[i].NextHop, nexthop);
+				if (routes[i].i != foundInterface)
+				{
+					theApp.getSoftwareRouterDialog()->removeRoute(i);
+					routes[i].i = foundInterface;
+					theApp.getSoftwareRouterDialog()->addRoute(i, routes[i]);
+				}
+				return foundInterface;
+			}
+			return routes[i].i;
+		}
 
 	return NULL;
 }
@@ -108,10 +129,11 @@ Interface* RoutingTable::findInterface(ipAddressStructure& address)
 void RoutingTable::addRoute(routeStructure r)
 {
 	int i;
-	int count = routes.GetCount();
+	int count;
+	CSingleLock lock(&criticalSectionTable);
 
-	//if (r.NextHop.HasNextHop) r.i = FindInterface(r.NextHop);
-
+	lock.Lock();
+	count = routes.GetCount();
 	if (routes.IsEmpty())
 	{
 		routes.Add(r);
@@ -159,9 +181,15 @@ void RoutingTable::addRoute(routeStructure r)
 
 int RoutingTable::removeRoute(int index)
 {
-	if (routes[index].type != STATIC) return 1;
+	CSingleLock lock(&criticalSectionTable);
 
-	routes.RemoveAt(index);
-	theApp.getSoftwareRouterDialog()->removeRoute(index);
-	return 0;
+	lock.Lock();
+	if (routes[index].type != STATIC) {
+		return 1;
+	}
+	else {
+		routes.RemoveAt(index);
+		theApp.getSoftwareRouterDialog()->removeRoute(index);
+		return 0;
+	}	
 }

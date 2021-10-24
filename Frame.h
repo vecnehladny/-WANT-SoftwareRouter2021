@@ -2,6 +2,7 @@
 
 #include <agents.h>
 #define ETH2_HEADER_LENGTH 14
+#define ARP_LENGTH 28
 
 using namespace Concurrency;
 
@@ -36,6 +37,7 @@ struct macAddressStructure {
 class Frame {
 public:
 	Frame(void);
+	Frame(u_int frameLength);
 	~Frame(void);
 
 private:
@@ -53,8 +55,8 @@ public:
 	void setDestinationMacAddress(macAddressStructure mac);
 	u_char* getData(void);
 	u_int getLength(void);
-	WORD getLayer3(void);
-	BYTE getLayer4(void);
+	WORD getLayer3Type(void);
+	BYTE getLayer4Type(void);
 	WORD getLayer4SourcePort(void);
 	WORD getLayer4DestinationPort(void);
 	ipAddressStructure getSourceIpAddress(void);
@@ -62,5 +64,24 @@ public:
 	BYTE getTtl(void);
 	void decTtl(void);
 	int validateChecksum(void);
-
+	void clear(void);
+	int isRequestArp(void);
+	int isReplyArp(void);
+	void generateArpRequest(macAddressStructure senderMac, ipAddressStructure senderIp, ipAddressStructure targetIp);
+	void generateArpReply(macAddressStructure senderMac, ipAddressStructure senderIp);
+	macAddressStructure getArpSenderMac(void);
+	ipAddressStructure getArpSenderIp(void);
+	ipAddressStructure getArpTargetIp(void);
+	int isIcmpEchoRequest(void);
+	void generateIcmpEchoReply(ipAddressStructure localIp);
+	void generateTtlExceeded(Frame* old, ipAddressStructure localIp, WORD IPHdrID);
+	void fillIcmpChecksum(void);
+	int isIcmpChecksumValid(void);
+	void setLayer3Type(WORD type);
+	BYTE getUpperByte(WORD number);
+	BYTE getLowerByte(WORD number);
+	void setSourceIpAddress(ipAddressStructure ip);
+	void setDestinationIpAddress(ipAddressStructure ip);
+	WORD merge(BYTE upper, BYTE lower);
+	void fillTcpChecksum(void);
 };
