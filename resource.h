@@ -36,8 +36,12 @@
 #define IDC_ROUTINGTABLE                1019
 #define IDC_ADDSTATICROUTEADSPIN        1020
 #define IDC_ROUTINGTABLEADD             1020
-#define IDC_ROUTINGTABLEADD2            1021
 #define IDC_ROUTINGTABLEREMOVE          1021
+#define IDC_ARPTABLE                    1022
+#define IDC_ARPTABLECLEAR               1023
+#define IDC_SENDARPREQUEST              1024
+#define IDC_REQSEND                     1024
+#define IDC_ARPTABLESENDREQUEST         1024
 
 // Next default values for new objects
 // 
@@ -45,7 +49,7 @@
 #ifndef APSTUDIO_READONLY_SYMBOLS
 #define _APS_NEXT_RESOURCE_VALUE        138
 #define _APS_NEXT_COMMAND_VALUE         32771
-#define _APS_NEXT_CONTROL_VALUE         1021
+#define _APS_NEXT_CONTROL_VALUE         1025
 #define _APS_NEXT_SYMED_VALUE           101
 #endif
 #endif

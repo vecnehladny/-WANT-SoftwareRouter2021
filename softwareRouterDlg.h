@@ -17,7 +17,6 @@
 #define WM_REMOVEROUTE_MESSAGE WM_APP+102
 #define WM_ADDARP_MESSAGE WM_APP+103
 #define WM_REMOVEARP_MESSAGE WM_APP+104
-#define WM_SENDARPREQUEST_MESSAGE WM_APP+105
 
 
 // CsoftwareRouterDlg dialog
@@ -66,7 +65,6 @@ private:
 	CMFCButton addRouteButton;
 	CMFCButton removeRouteButton;
 	CMFCButton clearArpTableButton;
-	CMFCButton sendArpRequestButton;
 
 	void autoResizeCols(CListCtrl* control);
 	void initInterfacesInfos();
@@ -93,7 +91,6 @@ public:
 	afx_msg void onAddStaticRouteButtonClicked();
 	afx_msg void onRemoveStaticRouteButtonClicked();
 	afx_msg void onClearArpTableButtonClicked();
-	afx_msg void onSendArpRequestButtonClicked();
 
 protected:
 	afx_msg LRESULT onSetIpMessage(WPARAM wParam, LPARAM lParam);
@@ -101,5 +98,4 @@ protected:
 	afx_msg LRESULT onRemoveRouteMessage(WPARAM wParam, LPARAM lParam);
 	afx_msg LRESULT onAddArp(WPARAM wParam, LPARAM lParam);
 	afx_msg LRESULT onRemoveArp(WPARAM wParam, LPARAM lParam);
-	afx_msg LRESULT onSendArpRequest(WPARAM wParam, LPARAM lParam);
 };

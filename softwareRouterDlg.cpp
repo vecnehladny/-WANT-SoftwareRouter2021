@@ -75,7 +75,6 @@ void CsoftwareRouterDlg::DoDataExchange(CDataExchange* pDX)
 	DDX_Control(pDX, IDC_ROUTINGTABLEADD, addRouteButton);
 	DDX_Control(pDX, IDC_ROUTINGTABLEREMOVE, removeRouteButton);
 	DDX_Control(pDX, IDC_ARPTABLECLEAR, clearArpTableButton);
-	DDX_Control(pDX, IDC_ARPTABLESENDREQUEST, sendArpRequestButton);
 }
 
 BEGIN_MESSAGE_MAP(CsoftwareRouterDlg, CDialogEx)
@@ -92,10 +91,8 @@ BEGIN_MESSAGE_MAP(CsoftwareRouterDlg, CDialogEx)
 	ON_BN_CLICKED(IDC_ROUTINGTABLEADD, &CsoftwareRouterDlg::onAddStaticRouteButtonClicked)
 	ON_BN_CLICKED(IDC_ROUTINGTABLEREMOVE, &CsoftwareRouterDlg::onRemoveStaticRouteButtonClicked)
 	ON_BN_CLICKED(IDC_ARPTABLECLEAR, &CsoftwareRouterDlg::onClearArpTableButtonClicked)
-	ON_BN_CLICKED(IDC_ARPTABLESENDREQUEST, &CsoftwareRouterDlg::onSendArpRequestButtonClicked)
 	ON_MESSAGE(WM_ADDARP_MESSAGE, &CsoftwareRouterDlg::onAddArp)
 	ON_MESSAGE(WM_REMOVEARP_MESSAGE, &CsoftwareRouterDlg::onRemoveArp)
-	ON_MESSAGE(WM_SENDARPREQUEST_MESSAGE, &CsoftwareRouterDlg::onSendArpRequest)
 END_MESSAGE_MAP()
 
 
@@ -135,7 +132,6 @@ BOOL CsoftwareRouterDlg::OnInitDialog()
 	initRoutingTable();
 	initArpTable();
 	theApp.startThreads();
-	sendArpRequestButton.SetTextColor(RGB(255, 0, 0));
 
 	return TRUE;  // return TRUE  unless you set the focus to a control
 }
@@ -492,23 +488,6 @@ afx_msg LRESULT CsoftwareRouterDlg::onRemoveArp(WPARAM wParam, LPARAM lParam)
 	free(index);
 
 	return 0;
-}
-
-
-LRESULT CsoftwareRouterDlg::onSendArpRequest(WPARAM wParam, LPARAM lParam)
-{
-	return LRESULT();
-}
-
-
-void CsoftwareRouterDlg::onSendArpRequestButtonClicked()
-{
-	ipAddressStructure* toSend = (ipAddressStructure*)malloc(sizeof(ipAddressStructure));
-	*toSend = theApp.getInterface(1)->getIpAddressStruct();
-
-	toSend->octets[0] = BYTE(0x0001);
-
-	theApp.getArpTable()->sendArpRequest(*toSend, theApp.getInterface(1));
 }
 
 
