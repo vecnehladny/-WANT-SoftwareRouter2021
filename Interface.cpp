@@ -305,22 +305,30 @@ void Interface::startReceive(void)
 
 UINT Interface::receiveThread(void* pParam)
 {
-	Interface* iface = (Interface*)pParam;
-	Frame* buffer = iface->getFrames();
-	pcap_t* handle = iface->getPcapHandle();
+	Interface* inInterface = (Interface*)pParam;
+	Frame* buffer = inInterface->getFrames();
+	pcap_t* handle = inInterface->getPcapHandle();
 	CStringA errorstring;
 	pcap_pkthdr* header = NULL;
 	const u_char* frame = NULL;
-	int retval = 0;
+	int toReturn = 0;
 
-	while ((iface->isEnabled()) && ((retval = pcap_next_ex(handle, &header, &frame)) >= 0))
+	toReturn = pcap_setbuff(handle, 102400);
+	if (toReturn == -1)
 	{
-		if (retval == 0) continue;
+		errorstring.Format("Error during the buffer allocation on INTERFACE %d!\r\n%s", inInterface->getId(), pcap_geterr(handle));
+		theApp.getSoftwareRouterDialog()->MessageBox(CString(errorstring), _T("Error"), MB_ICONERROR);
+		return 0;
+	}
+
+	while ((inInterface->isEnabled()) && ((toReturn = pcap_next_ex(handle, &header, &frame)) >= 0))
+	{
+		if (toReturn == 0) continue;
 		buffer->addFrame(header->len, frame);
 	}
-	if (retval == -1)
+	if (toReturn == -1)
 	{
-		errorstring.Format("Error receiving the packets on INTERFACE %d!\r\n%s", iface->getId(), pcap_geterr(handle));
+		errorstring.Format("Error receiving the packets on INTERFACE %d!\r\n%s", inInterface->getId(), pcap_geterr(handle));
 		theApp.getSoftwareRouterDialog()->MessageBox(CString(errorstring), _T("Error"), MB_ICONERROR);
 	}
 

@@ -35,6 +35,7 @@ public:
 	void startThreads(void);
 	int compareMac(macAddressStructure& mac1, macAddressStructure& mac2);
 	int isBroadcast(macAddressStructure& address);
+	BOOL ignoreFrame(Frame* buffer, macAddressStructure localMac);
 
 // Implementation
 

@@ -149,13 +149,13 @@ ipAddressStructure Frame::getDestinationIpAddress(void)
 }
 
 
-BYTE Frame::getTtl(void)
+BYTE Frame::getTTL(void)
 {
 	return frame[22];
 }
 
 
-void Frame::decTtl(void)
+void Frame::decreaseTTL(void)
 {
 	if (frame[22]) {
 		frame[22] -= 1;
@@ -466,4 +466,22 @@ void Frame::fillTcpChecksum(void)
 	while (sum >> 16) sum = (sum & 0xffff) + (sum >> 16);
 
 	*chksum_ptr = (WORD)(~sum);
+}
+
+
+void Frame::fillIpChecksum(void)
+{
+	WORD* checksumPointer = (WORD*)(frame + 24);
+
+	*checksumPointer = 0;
+	*checksumPointer = calculateChecksum((frame[14] & 0x0F) * 4, frame + ETH2_HEADER_LENGTH);
+}
+
+
+FRAME_TYPE Frame::getType(void) 
+{
+	if (frame[12] >= 0x06) return ETH2;
+	else if ((frame[14] == 0xFF) && (frame[15] == 0xFF)) return RAW;
+	else if ((frame[14] == 0xAA) && (frame[15] == 0xAA) && (frame[16] == 0x03)) return SNAP;
+	else return LLC;
 }

@@ -27,7 +27,8 @@ void ArpTable::initArpTable(void)
 	toAdd.macAddress.section[5] = 0x09;
 	toAdd.i = NULL;
 	arps.Add(toAdd);
-	theApp.getSoftwareRouterDialog()->addArp(0, toAdd);
+	CsoftwareRouterDlg* softwareRouterDialog = theApp.getSoftwareRouterDialog();
+	softwareRouterDialog->addArp(0, toAdd);
 
 	for (int i = 0; i < 4; i++) {
 		toAdd.ipAddress.octets[i] = 255;
@@ -36,7 +37,7 @@ void ArpTable::initArpTable(void)
 		toAdd.macAddress.section[i] = 0xFF;
 	}
 	arps.Add(toAdd);
-	theApp.getSoftwareRouterDialog()->addArp(0, toAdd);
+	softwareRouterDialog->addArp(0, toAdd);
 }
 
 int ArpTable::getMacAddress(ipAddressStructure ipAddress, Interface* intface, macAddressStructure* result)
@@ -65,7 +66,7 @@ void ArpTable::sendArpRequest(ipAddressStructure destinationIp, Interface* intfa
 	intface->sendFrame(&toSend);
 }
 
-void ArpTable::replyToArpRequest(Frame* buffer, Interface* intface)
+void ArpTable::replyToArpRequest(Frame* buffer, Interface* inInterface)
 {
 	arpStructure toAdd;
 	ipAddressStructure arpTargetIp = buffer->getArpTargetIp();
@@ -74,24 +75,26 @@ void ArpTable::replyToArpRequest(Frame* buffer, Interface* intface)
 
 	toAdd.ipAddress = buffer->getArpSenderIp();
 	toAdd.macAddress = buffer->getArpSenderMac();
-	toAdd.i = intface;
+	toAdd.i = inInterface;
 
-	if ((intface->isIpLocal(arpTargetIp))
-		|| (((foundInterface = theApp.getRoutingTable()->doLookup(arpTargetIp)) != NULL) && (foundInterface != intface)))
+	if ((inInterface->isIpLocal(arpTargetIp))
+		|| (((foundInterface = theApp.getRoutingTable()->doLookup(arpTargetIp)) != NULL) && (foundInterface != inInterface)))
 	{
-		buffer->generateArpReply(intface->getMacAddressStruct(), arpTargetIp);
-		intface->sendFrame(buffer);
+		buffer->generateArpReply(inInterface->getMacAddressStruct(), arpTargetIp);
+		inInterface->sendFrame(buffer);
 	}
 
-	lock.Lock();
-	for (int i = 0; i < arps.GetCount(); i++) {
-		if (areIpAddressesEqual(toAdd.ipAddress, arps[i].ipAddress) == 0) {
-			return;
+	if (inInterface->isIpInLocalNetwork(toAdd.ipAddress)) {
+		lock.Lock();
+		for (int i = 0; i < arps.GetCount(); i++) {
+			if (areIpAddressesEqual(toAdd.ipAddress, arps[i].ipAddress) == 0) {
+				return;
+			}
 		}
-	}
 
-	arps.InsertAt(0, toAdd);
-	theApp.getSoftwareRouterDialog()->addArp(0, toAdd);
+		arps.InsertAt(0, toAdd);
+		theApp.getSoftwareRouterDialog()->addArp(0, toAdd);
+	}
 }
 
 void ArpTable::proccessArpReply(Frame* buffer, Interface* intface)

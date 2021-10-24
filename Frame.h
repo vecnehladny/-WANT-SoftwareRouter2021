@@ -61,8 +61,8 @@ public:
 	WORD getLayer4DestinationPort(void);
 	ipAddressStructure getSourceIpAddress(void);
 	ipAddressStructure getDestinationIpAddress(void);
-	BYTE getTtl(void);
-	void decTtl(void);
+	BYTE getTTL(void);
+	void decreaseTTL(void);
 	int validateChecksum(void);
 	void clear(void);
 	int isRequestArp(void);
@@ -84,4 +84,6 @@ public:
 	void setDestinationIpAddress(ipAddressStructure ip);
 	WORD merge(BYTE upper, BYTE lower);
 	void fillTcpChecksum(void);
+	void fillIpChecksum(void);
+	FRAME_TYPE getType(void);
 };
