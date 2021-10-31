@@ -236,88 +236,6 @@ UINT CsoftwareRouterApp::routingProcess(void* pParam)
 }
 
 
-UINT CsoftwareRouterApp::routingProcessOld(void* pParam)
-{
-	Interface* inInterface = (Interface*)pParam;
-	Interface* outInterface;
-	Frame* buffer = inInterface->getFrames();
-	Frame TTLex;
-	RoutingTable* routingTable = theApp.getRoutingTable();
-	ArpTable* arpTab = theApp.getArpTable();
-	int retval ;
-	macAddressStructure sourceMac, destinationMac, localMac = inInterface->getMacAddressStruct();
-	ipAddressStructure destinationIp, nextHop, * nextHopPointer;
-
-	while (TRUE)
-	{
-		
-		buffer->getFrame();
-		sourceMac = buffer->getSourceMacAddress();
-		destinationMac = buffer->getDestinationMacAddress();
-
-		if (!theApp.ignoreFrame(buffer, localMac))
-		{
-			if (buffer->getLayer3Type() == 0x0806)
-			{
-				if (buffer->isReplyArp()) arpTab->proccessArpReply(buffer, inInterface);
-				if (buffer->isRequestArp()) arpTab->replyToArpRequest(buffer, inInterface);
-				continue;
-			}
-			retval = buffer->isRipMessage();
-
-			if (retval == 1)
-			{
-				routingTable->processRipRequest(buffer, inInterface);
-				continue;
-			}
-			if (retval == 2)
-			{
-				routingTable->processRipResponse(buffer, inInterface);
-				continue;
-			}
-			buffer->decreaseTTL();
-			if (buffer->getTTL() == 0)
-			{
-				TTLex.generateTtlExceeded(buffer, inInterface->getIpAddressStruct(), inInterface->generateIpHeaderId());
-				inInterface->sendFrame(&TTLex, NULL, FALSE);
-				TTLex.clear();
-				continue;
-			}
-
-			destinationIp = buffer->getDestinationIpAddress();
-			if ((theApp.getInterface(1)->isIpLocal(destinationIp)) || (theApp.getInterface(2)->isIpLocal(destinationIp)))
-			{
-				if ((buffer->isIcmpEchoRequest()) && (buffer->isIcmpChecksumValid()))
-				{
-					buffer->generateIcmpEchoReply(destinationIp);
-					inInterface->sendFrame(buffer, NULL, FALSE);
-				}
-				continue;
-			}
-			destinationIp = buffer->getDestinationIpAddress();
-			routingTable->criticalSectionTable.Lock();
-			nextHopPointer = NULL;
-			outInterface = routingTable->doLookup(destinationIp, &nextHopPointer);
-			if (nextHopPointer) {
-				nextHop = *nextHopPointer;
-				nextHopPointer = &nextHop;
-			}
-			routingTable->criticalSectionTable.Unlock();
-			if (!outInterface) continue;
-			buffer->fillIpChecksum();
-			retval = outInterface->sendFrame(buffer, nextHopPointer);
-			if (retval != 0) break;
-		}
-		else 
-		{
-			continue;
-		}
-	}
-
-	return 0;
-}
-
-
 void CsoftwareRouterApp::startThreads(void)
 {
 	AfxBeginThread(CsoftwareRouterApp::routingProcess, interface1);
@@ -346,22 +264,4 @@ int CsoftwareRouterApp::isBroadcast(macAddressStructure& address)
 	}
 
 	return 1;
-}
-
-BOOL CsoftwareRouterApp::ignoreFrame(Frame* buffer, macAddressStructure localMac)
-{
-	// if source MAC address is the local MAC address, the frame is ignored
-	if (theApp.compareMac(buffer->getSourceMacAddress(), localMac) == 0) return TRUE;
-	// if source and destination MAC addresses are the same, the frame is ignored
-	if (theApp.compareMac(buffer->getSourceMacAddress(), buffer->getDestinationMacAddress()) == 0) return TRUE;
-	// if source MAC address is broadcast address, the frame is ignored
-	if (theApp.isBroadcast(buffer->getSourceMacAddress())) return TRUE;
-	// if destination MAC address is not the local or broadcast MAC address
-	if ((theApp.compareMac(buffer->getDestinationMacAddress(), localMac) == 1) 
-		&& (theApp.isBroadcast(buffer->getDestinationMacAddress()) == 0) 
-		&& !buffer->isMulticast()) return TRUE;
-	// if not include IP packet, the frame is ignored
-	if (buffer->getLayer3Type() != 0x0800) return TRUE;
-	// if the IP header checksum is not valid, the packet is ignored
-	if (!buffer->validateChecksum()) return TRUE;
 }
