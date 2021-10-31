@@ -151,13 +151,13 @@ void AddStaticRouteDlg::onAddButtonClicked()
 
 	if (interfaceComboBox.GetCurSel() == 0)
 	{
-		newRoute.NextHop.hasNextHop = TRUE;
-		nextHopBox.GetAddress(newRoute.NextHop.octets[3], newRoute.NextHop.octets[2], newRoute.NextHop.octets[1], newRoute.NextHop.octets[0]);
+		newRoute.nextHop.hasNextHop = TRUE;
+		nextHopBox.GetAddress(newRoute.nextHop.octets[3], newRoute.nextHop.octets[2], newRoute.nextHop.octets[1], newRoute.nextHop.octets[0]);
 		newRoute.i = NULL;
 	}
 	else
 	{
-		newRoute.NextHop.hasNextHop = FALSE;
+		newRoute.nextHop.hasNextHop = FALSE;
 		if (interfaceComboBox.GetCurSel() == 1) newRoute.i = theApp.getInterface(1);
 		else newRoute.i = theApp.getInterface(2);
 	}

@@ -55,6 +55,6 @@ public:
 	pcap_t* getPcapHandle(void);
 	void startReceive(void);
 	static UINT receiveThread(void* pParam);
-	int sendFrame(Frame* buffer, ipAddressStructure* NextHop = NULL, BOOL UseARP = TRUE);
+	int sendFrame(Frame* buffer, ipAddressStructure* nextHop = NULL, BOOL UseARP = TRUE);
 	Frame* getFrames(void);
 };

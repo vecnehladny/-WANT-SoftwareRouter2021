@@ -162,7 +162,7 @@ CStringA CSetIntDlg::getAdapterRpcapAddressFromInterface(int interfaceNumber) {
 	if (interfaceNumber == 2) {
 		rpcapAddress.Format(
 			"rpcap://\\Device\\NPF_%s",
-			interfaceNames[interface1Box.GetCurSel()]);
+			interfaceNames[interface2Box.GetCurSel()]);
 		return rpcapAddress;
 	}
 

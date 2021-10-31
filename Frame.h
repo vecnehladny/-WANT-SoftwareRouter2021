@@ -17,10 +17,10 @@ struct ipAddressStructure {
 	union {
 
 		BYTE octets[4];
-		BYTE dw;
+		DWORD dw = 0;
 	};
 	union {
-		BYTE mask;
+		BYTE mask = 0x00;
 		BYTE hasNextHop;
 	};
 };
@@ -34,6 +34,11 @@ struct macAddressStructure {
 	BYTE section[6];
 };
 
+struct ripResponseStructure {
+	ipAddressStructure prefix;
+	BYTE metric;
+};
+
 class Frame {
 public:
 	Frame(void);
@@ -44,6 +49,7 @@ private:
 	unbounded_buffer<frameStructure*> buffer;
 	u_char* frame;
 	u_int length;
+	CArray<ripResponseStructure> routeList;
 	WORD calculateChecksum(int count, u_char* address);
 
 public:
@@ -86,4 +92,13 @@ public:
 	void fillTcpChecksum(void);
 	void fillIpChecksum(void);
 	FRAME_TYPE getType(void);
+	int isMulticast(void);
+	int isRipMessage(void);
+	int generateRawRipPacket(ipAddressStructure localIp, ipAddressStructure* destinationIp, int dataLength);
+	void generateRipRequest(ipAddressStructure localIp);
+	void generateRipResponse(ipAddressStructure localIp, ipAddressStructure* destinationIp = NULL);
+	void addRipRoute(ipAddressStructure prefix, BYTE metric);
+	int getRipRouteCount(void);
+	CArray<ripResponseStructure>& getRipRoutesFromPacket(void);
+	void fillUdpChecksum(void);
 };

@@ -14,7 +14,7 @@ Interface::Interface(int id) :
 		macAddressStruct.section[i] = 0x00;
 	}
 	for (int i = 0; i < 4; i++) {
-		macAddressStruct.section[i] = 0x00;
+		ipAddressStruct.octets[i] = 0x00;
 	}
 	ipAddressStruct.mask = 0;
 	frames = new Frame();
@@ -67,11 +67,19 @@ BOOL Interface::isIpAddressSet()
 
 void Interface::enable()
 {
+	Frame ripMessage;
+
 	criticalSectionEnabling.Lock();
 	if (enabled != TRUE) {
 		enabled = TRUE;
 		theApp.getRoutingTable()->addConnection(this, TRUE);
 		theApp.getArpTable()->addBroadcastOfInterface(this);
+		if (theApp.getRoutingTable()->isRipEnabled())
+		{
+			theApp.getRoutingTable()->resetTime();
+			ripMessage.generateRipRequest(ipAddressStruct);
+			sendFrame(&ripMessage);
+		}
 		startReceive();
 	}	
 	criticalSectionEnabling.Unlock();
@@ -84,6 +92,9 @@ void Interface::disable()
 		enabled = FALSE;
 		theApp.getRoutingTable()->removeConnection(this, TRUE);
 		theApp.getArpTable()->clearArpTable(this);
+		theApp.getRoutingTable()->removeConnection(this, TRUE);
+		theApp.getArpTable()->clearArpTable(this);
+		theApp.getRoutingTable()->resetTime();
 	}
 	criticalSectionEnabling.Unlock();
 }
@@ -190,14 +201,10 @@ CString Interface::getPrefix(void)
 
 ipAddressStructure Interface::getPrefixStruct(void)
 {
-	ipAddressStructure prefix;
-
 	CSingleLock lock(&criticalSectionIp);
 
 	lock.Lock();
 	return prefixStruct;
-
-	return prefix;
 }
 
 ipAddressStructure Interface::getBroadcastIPAddress(void)
@@ -244,8 +251,21 @@ int Interface::isIpInLocalNetwork(ipAddressStructure& ip)
 
 void Interface::setPrefix(void)
 {
+	//CString tmp;
+	//tmp.Format(_T("%u.%u.%u.%u/%u\n"), ipAddressStruct.octets[3], ipAddressStruct.octets[2], ipAddressStruct.octets[1], ipAddressStruct.octets[0], ipAddressStruct.mask);
+	//tmp.AppendFormat(_T("%u.%u.%u.%u/%u\n"), prefixStruct.octets[3], prefixStruct.octets[2], prefixStruct.octets[1], prefixStruct.octets[0], prefixStruct.mask);
+	//tmp.AppendFormat(_T("prefix.dw %ld\n"), prefixStruct.dw);
+	//tmp.AppendFormat(_T("ip.dw %ld\n"), ipAddressStruct.dw);
+	//tmp.AppendFormat(_T("ip.cidr %u\n"), ipAddressStruct.mask);
+	//AfxMessageBox(tmp);
 	prefixStruct.dw = (ipAddressStruct.dw >> (32 - ipAddressStruct.mask)) << (32 - ipAddressStruct.mask);
 	prefixStruct.mask = ipAddressStruct.mask;
+	//tmp.Format(_T("%u.%u.%u.%u/%u\n"), ipAddressStruct.octets[3], ipAddressStruct.octets[2], ipAddressStruct.octets[1], ipAddressStruct.octets[0], ipAddressStruct.mask);
+	//tmp.AppendFormat(_T("%u.%u.%u.%u/%u\n"), prefixStruct.octets[3], prefixStruct.octets[2], prefixStruct.octets[1], prefixStruct.octets[0], prefixStruct.mask);
+	//tmp.AppendFormat(_T("prefix.dw %ld\n"), prefixStruct.dw);
+	//tmp.AppendFormat(_T("ip.dw %ld\n"), ipAddressStruct.dw);
+	//tmp.AppendFormat(_T("ip.cidr %u\n"), ipAddressStruct.mask);
+	//AfxMessageBox(tmp);
 }
 
 
@@ -336,7 +356,7 @@ UINT Interface::receiveThread(void* pParam)
 }
 
 
-int Interface::sendFrame(Frame* buffer, ipAddressStructure* NextHop, BOOL UseARP)
+int Interface::sendFrame(Frame* buffer, ipAddressStructure* nextHop, BOOL UseARP)
 {
 	macAddressStructure req;
 	int retval;
@@ -348,8 +368,8 @@ int Interface::sendFrame(Frame* buffer, ipAddressStructure* NextHop, BOOL UseARP
 	buffer->setSourceMacAddress(macAddressStruct);
 	if ((UseARP) && (buffer->getLayer3Type() == 0x0800))
 	{
-		if (NextHop) {
-			retval = theApp.getArpTable()->getMacAddress(*NextHop, this, &req);
+		if (nextHop) {
+			retval = theApp.getArpTable()->getMacAddress(*nextHop, this, &req);
 		}
 		else {
 			retval = theApp.getArpTable()->getMacAddress(buffer->getDestinationIpAddress(), this, &req);

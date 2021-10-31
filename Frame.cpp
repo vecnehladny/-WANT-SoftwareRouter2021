@@ -21,6 +21,7 @@ Frame::~Frame(void)
 	if (frame) {
 		free(frame);
 	}
+	routeList.RemoveAll();
 }
 
 void Frame::addFrame(u_int length, const u_char* data_const)
@@ -203,6 +204,7 @@ void Frame::clear(void)
 
 	frame = NULL;
 	length = 0;
+	routeList.RemoveAll();
 }
 
 void Frame::setLayer3Type(WORD type)
@@ -375,7 +377,7 @@ void Frame::generateIcmpEchoReply(ipAddressStructure localIp)
 		frame[i] = localIp.octets[3 - i + 26];
 	}
 	SetIpTTL(255);
-	fillTcpChecksum();
+	fillIpChecksum();
 
 	frame[34] = 0;
 	fillIcmpChecksum();
@@ -484,4 +486,239 @@ FRAME_TYPE Frame::getType(void)
 	else if ((frame[14] == 0xFF) && (frame[15] == 0xFF)) return RAW;
 	else if ((frame[14] == 0xAA) && (frame[15] == 0xAA) && (frame[16] == 0x03)) return SNAP;
 	else return LLC;
+}
+
+int Frame::isMulticast(void)
+{
+	if (frame[0] != 0x01) return 0;
+	if (frame[1] != 0x00) return 0;
+	if (frame[2] != 0x5E) return 0;
+	if (frame[3] != 0x00) return 0;
+	if (frame[4] != 0x00) return 0;
+	if (frame[5] != 0x09) return 0;
+
+	return 1;
+}
+
+
+int Frame::isRipMessage(void)
+{
+	int index;
+
+	if (getLayer4Type() != 17) return 0;
+
+	if ((getLayer4SourcePort() != 520) || (getLayer4DestinationPort() != 520)) return 0;
+
+	index = ETH2_HEADER_LENGTH + ((frame[14] & 0x0F) * 4) + 8;
+
+	if (frame[index + 1] != 2) return 0;
+
+	if (frame[index] == 1) return 1;
+
+	if (frame[index] == 2) return 2;
+
+	return 0;
+}
+
+
+int Frame::generateRawRipPacket(ipAddressStructure localIp, ipAddressStructure* destinationIp, int dataLength)
+{
+	WORD w;
+
+	length = ETH2_HEADER_LENGTH + 28 + dataLength;
+	if (frame)
+	{
+		free(frame);
+	}
+	frame = (u_char*)malloc(length * sizeof(u_char));
+	setLayer3Type(0x0800);
+
+	frame[14] = 0x45;
+	frame[15] = 0xC0;
+	w = length - ETH2_HEADER_LENGTH;
+	frame[16] = getUpperByte(w);
+	frame[17] = getLowerByte(w);
+	frame[18] = 0;
+	frame[19] = 0;
+	frame[20] = 0;
+	frame[21] = 0;
+	frame[22] = 2;
+	frame[23] = 17;
+	setSourceIpAddress(localIp);
+	if (destinationIp)
+	{
+		setDestinationIpAddress(*destinationIp);
+	}
+	else
+	{
+		frame[30] = 224;
+		frame[31] = 0;
+		frame[32] = 0;
+		frame[33] = 9;
+	}
+	fillIpChecksum();
+
+	frame[34] = 2;
+	frame[35] = 8;
+	frame[36] = 2;
+	frame[37] = 8;
+	frame[38] = getUpperByte(dataLength + 8);
+	frame[39] = getLowerByte(dataLength + 8);
+
+	return ETH2_HEADER_LENGTH + 28;
+}
+
+
+void Frame::generateRipRequest(ipAddressStructure localIp)
+{
+	int index = generateRawRipPacket(localIp, NULL, 24);
+
+	frame[index++] = 1;
+	frame[index++] = 2;
+	for (int i = 0; i < 21; i++)
+	{
+		frame[index++] = 0;
+	}
+	frame[index] = 0x10;
+	fillUdpChecksum();
+}
+
+
+void Frame::generateRipResponse(ipAddressStructure localIp, ipAddressStructure* destinationIp)
+{
+	int index = generateRawRipPacket(localIp, destinationIp, (routeList.GetCount() * 20) + 4);
+	DWORD maxBit = 1 << 31;
+	ipAddressStructure mask;
+
+	frame[index++] = 2;
+	frame[index++] = 2;
+	frame[index++] = 0;
+	frame[index++] = 0;
+
+	for (int j = 0; j < routeList.GetCount(); j++)
+	{
+		frame[index++] = 0;
+		frame[index++] = 2;
+		frame[index++] = 0;
+		frame[index++] = 0;
+		for (int i = 3; i >= 0; i--)
+		{
+			frame[index++] = routeList[j].prefix.octets[i];
+		}
+
+		mask.dw = 0;
+		for (int i = 0; i < routeList[j].prefix.mask; i++)
+		{
+			mask.dw >>= 1;
+			mask.dw |= maxBit;
+		}
+		for (int i = 3; i >= 0; i--) 
+		{
+			frame[index++] = mask.octets[i];
+		}
+
+		for (int i = 3; i >= 0; i--)
+		{
+			frame[index++] = 0;
+		}
+		frame[index++] = 0;
+		frame[index++] = 0;
+		frame[index++] = 0;
+		frame[index++] = routeList[j].metric;
+	}
+	fillUdpChecksum();
+}
+
+
+void Frame::addRipRoute(ipAddressStructure prefix, BYTE metric)
+{
+	ripResponseStructure toAdd;
+
+	toAdd.prefix = prefix;
+	toAdd.metric = metric;
+	if (toAdd.metric < 16)
+	{
+		toAdd.metric++;
+	}
+	routeList.Add(toAdd);
+}
+
+
+int Frame::getRipRouteCount(void)
+{
+	return routeList.GetCount();
+}
+
+
+CArray<ripResponseStructure>& Frame::getRipRoutesFromPacket(void)
+{
+	int ipHeaderLength = (frame[14] & 0x0F) * 4;
+	int count = (merge(frame[ETH2_HEADER_LENGTH + ipHeaderLength + 4], frame[ETH2_HEADER_LENGTH + ipHeaderLength + 5]) - 12) / 20;
+	int index = ETH2_HEADER_LENGTH + ipHeaderLength + 12;
+	ripResponseStructure route;
+	ipAddressStructure mask;
+
+	while (count)
+	{
+		index += 4;
+		for (int i = 3; i >= 0; i--)
+		{
+			route.prefix.octets[i] = frame[index++];
+		}
+		for (int i = 3; i >= 0; i--)
+		{
+			mask.octets[i] = frame[index++];
+		}
+		route.prefix.mask = 0;
+		while (mask.dw)
+		{
+			route.prefix.mask++;
+			mask.dw <<= 1;
+		}
+		index += 7;
+		route.metric = frame[index++];
+		routeList.Add(route);
+		count--;
+	}
+
+	return routeList;
+}
+
+
+void Frame::fillUdpChecksum(void)
+{
+	int ipHeaderLength = (frame[14] & 0x0F) * 4;
+	u_char* address = frame + ETH2_HEADER_LENGTH + ipHeaderLength;
+	WORD* addressWord = (WORD*)address;
+	int count = merge(*(address + 4), *(address + 5));
+	WORD* checksumPointer = addressWord + 3;
+	register DWORD sum = 0;
+
+	*checksumPointer = 0;
+	while (count > 1)
+	{
+		sum += *addressWord++;
+		count -= 2;
+	}
+
+	if (count > 0)
+	{
+		sum += *(u_char*)addressWord;
+	}
+
+	addressWord = (WORD*)address;
+	sum += 0x1100;
+	sum += *(addressWord + 2);
+	addressWord -= 4;
+	sum += *addressWord++;
+	sum += *addressWord++;
+	sum += *addressWord++;
+	sum += *addressWord;
+
+	while (sum >> 16)
+	{
+		sum = (sum & 0xffff) + (sum >> 16);
+	}
+
+	*checksumPointer = (WORD)(~sum);
 }

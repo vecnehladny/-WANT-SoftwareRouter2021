@@ -80,9 +80,8 @@ void SetIpDlg::setMask(BYTE cidr)
 {
 	DWORD dwMask = 0;
 	DWORD maxBit = 1 << 31;
-	BYTE i;
 
-	for (i = 0; i < cidr; i++)
+	for (int i = 0; i < cidr; i++)
 	{
 		dwMask >>= 1;
 		dwMask |= maxBit;
@@ -93,32 +92,33 @@ void SetIpDlg::setMask(BYTE cidr)
 
 void SetIpDlg::onSetBtnClicked()
 {
-	ipAddressStructure ipAddressStruct;
+	ipAddressStructure ipAddressStructt;
 	DWORD dwAddr;
+	BYTE cidrField = (BYTE)GetDlgItemInt(IDC_SETIPMASKCIDR, NULL, 0);
 
-	ipAddressStruct.mask = getCidr();
+	ipAddressStructt.mask = getCidr();
 
-	if ((ipAddressStruct.mask == INVALID_CIDR))
+	if ((ipAddressStructt.mask == INVALID_CIDR) || (cidrField < 0) || (cidrField > 32))
 	{
 		AfxMessageBox(_T("Mask is invalid"));
 		return;
 	}
 
 	setIpAddrBox.GetAddress(dwAddr);
-	dwAddr <<= ipAddressStruct.mask;
-	if ((dwAddr == 0) || (((~dwAddr) >> ipAddressStruct.mask) == 0))
+	dwAddr <<= ipAddressStructt.mask;
+	if ((dwAddr == 0) || (((~dwAddr) >> ipAddressStructt.mask) == 0))
 	{
 		AfxMessageBox(_T("Ip address is invalid"));
 		return;
 	}
 
 	setIpAddrBox.GetAddress(
-		ipAddressStruct.octets[3], 
-		ipAddressStruct.octets[2],
-		ipAddressStruct.octets[1],
-		ipAddressStruct.octets[0]);
+		ipAddressStructt.octets[3], 
+		ipAddressStructt.octets[2],
+		ipAddressStructt.octets[1],
+		ipAddressStructt.octets[0]);
 
-	theApp.getSoftwareRouterDialog()->setIpAddr(setIpInterface, ipAddressStruct);
+	theApp.getSoftwareRouterDialog()->setIpAddr(setIpInterface, ipAddressStructt);
 
 	CDialog::OnOK();
 }
@@ -134,6 +134,7 @@ void SetIpDlg::onMaskCidrChange()
 
 void SetIpDlg::onMaskChange(NMHDR* pNMHDR, LRESULT* pResult)
 {
+	LPNMIPADDRESS pIPAddr = reinterpret_cast<LPNMIPADDRESS>(pNMHDR);
 	BYTE cidr = getCidr();
 
 	if (cidr != INVALID_CIDR) {

@@ -31,7 +31,7 @@ public:
 	RoutingTable* getRoutingTable();
 	ArpTable* getArpTable();
 	static UINT routingProcess(void* pParam);
-	static UINT arpProcess(void* pParam);
+	static UINT routingProcessOld(void* pParam);
 	void startThreads(void);
 	int compareMac(macAddressStructure& mac1, macAddressStructure& mac2);
 	int isBroadcast(macAddressStructure& address);

@@ -8,6 +8,7 @@
 #include "softwareRouterDlg.h"
 #include "afxdialogex.h"
 #include "SetIpDlg.h"
+#include "SetRipTimersDlg.h"
 
 #ifdef _DEBUG
 #define new DEBUG_NEW
@@ -75,6 +76,9 @@ void CsoftwareRouterDlg::DoDataExchange(CDataExchange* pDX)
 	DDX_Control(pDX, IDC_ROUTINGTABLEADD, addRouteButton);
 	DDX_Control(pDX, IDC_ROUTINGTABLEREMOVE, removeRouteButton);
 	DDX_Control(pDX, IDC_ARPTABLECLEAR, clearArpTableButton);
+	DDX_Control(pDX, IDC_RIPV2ENABLEBTN, ripEnableButton);
+	DDX_Control(pDX, IDC_RIPV2SETTIMERSBTN, ripSetTimersButton);
+	DDX_Control(pDX, IDC_RIPV2NEXTUPDATE, ripUpdateInText);
 }
 
 BEGIN_MESSAGE_MAP(CsoftwareRouterDlg, CDialogEx)
@@ -93,6 +97,9 @@ BEGIN_MESSAGE_MAP(CsoftwareRouterDlg, CDialogEx)
 	ON_BN_CLICKED(IDC_ARPTABLECLEAR, &CsoftwareRouterDlg::onClearArpTableButtonClicked)
 	ON_MESSAGE(WM_ADDARP_MESSAGE, &CsoftwareRouterDlg::onAddArp)
 	ON_MESSAGE(WM_REMOVEARP_MESSAGE, &CsoftwareRouterDlg::onRemoveArp)
+	ON_BN_CLICKED(IDC_RIPV2ENABLEBTN, &CsoftwareRouterDlg::onRipEnableButtonClicked)
+	ON_BN_CLICKED(IDC_RIPV2SETTIMERSBTN, &CsoftwareRouterDlg::onRipSetTimersButtonClicked)
+	ON_MESSAGE(WM_RIPUPDATE_MESSAGE, &CsoftwareRouterDlg::onRipUpdateMessage)
 END_MESSAGE_MAP()
 
 
@@ -131,6 +138,7 @@ BOOL CsoftwareRouterDlg::OnInitDialog()
 	initInterfacesInfos();
 	initRoutingTable();
 	initArpTable();
+	ripUpdateInText.SetWindowTextW(_TEXT("-"));
 	theApp.startThreads();
 
 	return TRUE;  // return TRUE  unless you set the focus to a control
@@ -340,7 +348,7 @@ afx_msg LRESULT CsoftwareRouterDlg::onAddRouteMessage(WPARAM wParam, LPARAM lPar
 	routingTableBox.InsertItem(*index, tmp);
 
 	tmp.Format(
-		_T("%u.%u.%u.%u/%u"), 
+		_T("%u.%u.%u.%u/%u"),
 		r->prefix.octets[3],
 		r->prefix.octets[2],
 		r->prefix.octets[1],
@@ -354,13 +362,13 @@ afx_msg LRESULT CsoftwareRouterDlg::onAddRouteMessage(WPARAM wParam, LPARAM lPar
 	tmp.Format(_T("%u"), r->metric);
 	routingTableBox.SetItemText(*index, 3, tmp);
 
-	if (r->NextHop.hasNextHop) { 
+	if (r->nextHop.hasNextHop) { 
 		tmp.Format(
 			_T("%u.%u.%u.%u"), 
-			r->NextHop.octets[3],
-			r->NextHop.octets[2],
-			r->NextHop.octets[1],
-			r->NextHop.octets[0]); 
+			r->nextHop.octets[3],
+			r->nextHop.octets[2],
+			r->nextHop.octets[1],
+			r->nextHop.octets[0]); 
 	}
 	else { 
 		tmp.Format(_T("-")); 
@@ -368,7 +376,7 @@ afx_msg LRESULT CsoftwareRouterDlg::onAddRouteMessage(WPARAM wParam, LPARAM lPar
 	routingTableBox.SetItemText(*index, 4, tmp);
 
 	if (!r->i) tmp.Format(_T("-"));
-	else if (r->NextHop.hasNextHop) tmp.Format(_T("\"Int %d\""), r->i->getId());
+	else if (r->nextHop.hasNextHop) tmp.Format(_T("\"Int %d\""), r->i->getId());
 	else tmp.Format(_T("Int %d"), r->i->getId());
 	routingTableBox.SetItemText(*index, 5, tmp);
 
@@ -402,6 +410,8 @@ afx_msg void CsoftwareRouterDlg::onAddStaticRouteButtonClicked()
 {
 	AfxBeginThread(CsoftwareRouterDlg::editRouteThread, NULL);
 }
+
+
 afx_msg void CsoftwareRouterDlg::onRemoveStaticRouteButtonClicked() 
 {
 	int selected = routingTableBox.GetSelectionMark();
@@ -410,7 +420,7 @@ afx_msg void CsoftwareRouterDlg::onRemoveStaticRouteButtonClicked()
 		AfxMessageBox(_TEXT("Select route which you want to remove"));
 	}
 	else {
-		if (theApp.getRoutingTable()->removeRoute(selected)) {
+		if (theApp.getRoutingTable()->removeRouteUnsafe(selected)) {
 			AfxMessageBox(_TEXT("Select static route"));
 		}
 	}
@@ -491,6 +501,60 @@ afx_msg LRESULT CsoftwareRouterDlg::onRemoveArp(WPARAM wParam, LPARAM lParam)
 }
 
 
-void CsoftwareRouterDlg::sendArpRequest()
+void CsoftwareRouterDlg::onRipEnableButtonClicked()
 {
+	RoutingTable* routingTable = theApp.getRoutingTable();
+
+	if (routingTable->isRipEnabled())
+	{
+		AfxBeginThread(RoutingTable::stopRipProcess, NULL);
+		ripEnableButton.SetWindowTextW(_T("Enable"));
+	}
+	else
+	{
+		AfxBeginThread(RoutingTable::startRipProcess, NULL);
+		ripEnableButton.SetWindowTextW(_T("Disable"));
+	}
+}
+
+
+void CsoftwareRouterDlg::onRipSetTimersButtonClicked()
+{
+	AfxBeginThread(CsoftwareRouterDlg::setRipTimersThread, NULL);
+}
+
+
+UINT CsoftwareRouterDlg::setRipTimersThread(void* pParam)
+{
+	SetRipTimersDlg setRipTimersDlg;
+	setRipTimersDlg.DoModal();
+	return 0;
+}
+
+
+void CsoftwareRouterDlg::setRipUpdateStatus(int sec) 
+{
+	int* secPointer = (int*)malloc(sizeof(int));
+	*secPointer = sec;
+	SendMessage(WM_RIPUPDATE_MESSAGE, 0, (LPARAM)secPointer);
+}
+
+
+afx_msg LRESULT CsoftwareRouterDlg::onRipUpdateMessage(WPARAM wParam, LPARAM lParam)
+{
+	int* sec = (int*)lParam;
+	CString tmp;
+
+	if (*sec == -1)
+	{
+		tmp.Format(_T("-"));
+	}
+	else
+	{
+		tmp.Format(_T("%d"), *sec);
+	}
+	ripUpdateInText.SetWindowTextW(tmp);
+	free(sec);
+
+	return 0;
 }

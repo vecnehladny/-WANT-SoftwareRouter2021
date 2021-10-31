@@ -10,6 +10,7 @@
 #define IDD_SET_INT_DIALOG              129
 #define IDD_SET_IP_ADDR_DIALOG          135
 #define IDD_ADDSTATICROUTE_DIALOG       136
+#define IDD_SET_RIP_TIMER_DIALOG        137
 #define IDC_INTERFACE1COMBO             1001
 #define IDC_INTERFACE2COMBO             1002
 #define IDC_INT1DEVICENAME              1002
@@ -27,7 +28,10 @@
 #define IDC_INT2ENABLEBTN               1011
 #define IDC_SETIPMASKCIDRSPIN           1011
 #define IDC_ADDSTATICROUTEPREFIX        1012
+#define IDC_SETRIPUPDATE                1012
+#define IDC_RIPV2NEXTUPDATE             1012
 #define IDC_ADDSTATICROUTEMASK          1013
+#define IDC_SETRIPUPDATESPIN            1013
 #define IDC_ADDSTATICROUTEMASKCIDR      1014
 #define IDC_ADDSTATICROUTEMASKCIDRSPIN  1015
 #define IDC_ADDSTATICROUTENEXTHOP       1016
@@ -41,7 +45,15 @@
 #define IDC_ARPTABLECLEAR               1023
 #define IDC_SENDARPREQUEST              1024
 #define IDC_REQSEND                     1024
-#define IDC_ARPTABLESENDREQUEST         1024
+#define IDC_RIPV2ENABLEBTN              1024
+#define IDC_SETRIPINVALID               1025
+#define IDC_RIPSETTIMERSBTN             1025
+#define IDC_RIPV2SETTIMERSBTN           1025
+#define IDC_SETRIPINVALIDSPIN           1026
+#define IDC_SETRIPFLUSH                 1027
+#define IDC_SETRIPFLUSHSPIN             1028
+#define IDC_SETRIPHOLDDOWN              1029
+#define IDC_SETRIPHOLDDOWNSPIN          1030
 
 // Next default values for new objects
 // 
@@ -49,7 +61,7 @@
 #ifndef APSTUDIO_READONLY_SYMBOLS
 #define _APS_NEXT_RESOURCE_VALUE        138
 #define _APS_NEXT_COMMAND_VALUE         32771
-#define _APS_NEXT_CONTROL_VALUE         1025
+#define _APS_NEXT_CONTROL_VALUE         1027
 #define _APS_NEXT_SYMED_VALUE           101
 #endif
 #endif

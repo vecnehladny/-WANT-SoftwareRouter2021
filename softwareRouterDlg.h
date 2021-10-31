@@ -17,6 +17,7 @@
 #define WM_REMOVEROUTE_MESSAGE WM_APP+102
 #define WM_ADDARP_MESSAGE WM_APP+103
 #define WM_REMOVEARP_MESSAGE WM_APP+104
+#define WM_RIPUPDATE_MESSAGE WM_APP+105
 
 
 // CsoftwareRouterDlg dialog
@@ -66,6 +67,12 @@ private:
 	CMFCButton removeRouteButton;
 	CMFCButton clearArpTableButton;
 
+	CMFCButton ripEnableButton;
+	CMFCButton ripSetTimersButton;
+	CStatic ripNextUpdateText;
+
+	CStatic ripUpdateInText;
+
 	void autoResizeCols(CListCtrl* control);
 	void initInterfacesInfos();
 	void initRoutingTable();
@@ -81,7 +88,8 @@ public:
 	void removeRoute(int index);
 	void addArp(int index, arpStructure& entry);
 	void removeArp(int index);
-	void sendArpRequest();
+	static UINT setRipTimersThread(void* pParam);
+	void setRipUpdateStatus(int sec);
 
 public:
 	afx_msg void onInt1SetIpButtonClicked();
@@ -91,6 +99,8 @@ public:
 	afx_msg void onAddStaticRouteButtonClicked();
 	afx_msg void onRemoveStaticRouteButtonClicked();
 	afx_msg void onClearArpTableButtonClicked();
+	afx_msg void onRipEnableButtonClicked();
+	afx_msg void onRipSetTimersButtonClicked();
 
 protected:
 	afx_msg LRESULT onSetIpMessage(WPARAM wParam, LPARAM lParam);
@@ -98,4 +108,5 @@ protected:
 	afx_msg LRESULT onRemoveRouteMessage(WPARAM wParam, LPARAM lParam);
 	afx_msg LRESULT onAddArp(WPARAM wParam, LPARAM lParam);
 	afx_msg LRESULT onRemoveArp(WPARAM wParam, LPARAM lParam);
+	afx_msg LRESULT onRipUpdateMessage(WPARAM wParam, LPARAM lParam);
 };
