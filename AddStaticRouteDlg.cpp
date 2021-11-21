@@ -131,7 +131,7 @@ void AddStaticRouteDlg::onAddButtonClicked()
 
 	prefixBox.GetAddress(dwAddr);
 	dwAddr <<= newRoute.prefix.mask;
-	if (dwAddr != 0)
+	if ((newRoute.prefix.mask < 32) && (dwAddr != 0))
 	{
 		AfxMessageBox(_T("Prefix is invalid"));
 		return;

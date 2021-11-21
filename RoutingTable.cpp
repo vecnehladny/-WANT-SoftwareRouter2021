@@ -129,7 +129,7 @@ void RoutingTable::removeConnection(Interface* i, BOOL isDirect)
 int RoutingTable::matchPrefixes(ipAddressStructure& prefix1, ipAddressStructure& prefix2)
 {
 	if (prefix2.mask == 0) return 1;
-	if ((prefix1.dw >> (32 - prefix1.mask)) == (prefix2.dw >> (32 - prefix2.mask))) return 1;
+	if ((prefix1.dw >> (32 - prefix2.mask)) == (prefix2.dw >> (32 - prefix2.mask))) return 1;
 
 	return 0;
 }

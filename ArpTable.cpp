@@ -97,18 +97,18 @@ void ArpTable::replyToArpRequest(Frame* buffer, Interface* inInterface)
 	}
 }
 
-void ArpTable::proccessArpReply(Frame* buffer, Interface* intface)
+void ArpTable::proccessArpReply(Frame* buffer, Interface* inInterface)
 {
 	arpStructure toAdd;
 	CSingleLock lock(&arpCriticalSection);
 
-	if (!intface->isIpLocal(buffer->getArpTargetIp())) {
+	if (!inInterface->isIpLocal(buffer->getArpTargetIp())) {
 		return;
 	}
 
 	toAdd.ipAddress = buffer->getArpSenderIp();
 	toAdd.macAddress = buffer->getArpSenderMac();
-	toAdd.i = intface;
+	toAdd.i = inInterface;
 
 	lock.Lock();
 	for (int i = 0; i < arps.GetCount(); i++) {

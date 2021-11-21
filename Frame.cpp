@@ -100,9 +100,7 @@ u_int Frame::getLength(void)
 
 WORD Frame::getLayer3Type(void)
 {
-	WORD num = frame[12] << 8;
-	num |= frame[13];
-	return num;
+	return merge(frame[12],frame[13]);
 }
 
 
@@ -114,17 +112,21 @@ BYTE Frame::getLayer4Type(void)
 
 WORD Frame::getLayer4SourcePort(void)
 {
-	WORD num = frame[ETH2_HEADER_LENGTH + (ETH2_HEADER_LENGTH)] << 8;
-	num |= frame[ETH2_HEADER_LENGTH + ((frame[14] & 0x0F) * 4) + 1];
-	return num;
+	int ipHeaderLength;
+
+	ipHeaderLength = (frame[14] & 0x0F) * 4;
+
+	return merge(frame[ETH2_HEADER_LENGTH + ipHeaderLength], frame[ETH2_HEADER_LENGTH + ipHeaderLength + 1]);
 }
 
 
 WORD Frame::getLayer4DestinationPort(void)
 {
-	WORD num = frame[ETH2_HEADER_LENGTH + (ETH2_HEADER_LENGTH) + 2] << 8;
-	num |= frame[ETH2_HEADER_LENGTH + ((frame[14] & 0x0F) * 4) + 3];
-	return num;
+	int ipHeaderLength;
+
+	ipHeaderLength = (frame[14] & 0x0F) * 4;
+
+	return merge(frame[ETH2_HEADER_LENGTH + ipHeaderLength + 2], frame[ETH2_HEADER_LENGTH + ipHeaderLength + 3]);
 }
 
 
@@ -321,13 +323,13 @@ void Frame::generateArpReply(macAddressStructure senderMac, ipAddressStructure s
 
 macAddressStructure Frame::getArpSenderMac(void)
 {
-	macAddressStructure sender;
+	macAddressStructure senderMac;
 
 	for (int i = 22; i < 28; i++) {
-		sender.section[i - 22] = frame[i];
+		senderMac.section[i - 22] = frame[i];
 	}
 
-	return sender;
+	return senderMac;
 }
 
 
@@ -357,12 +359,14 @@ ipAddressStructure Frame::getArpTargetIp(void)
 
 int Frame::isIcmpEchoRequest(void)
 {
-	if ((getLayer4Type() == 1) && (frame[34] == 8)) {
+	int ipHeaderLength = (frame[14] & 0x0F) * 4;
+
+	if ((getLayer4Type() == 1) && (frame[ETH2_HEADER_LENGTH + ipHeaderLength] == 8))
+	{
 		return 1;
 	}
-	else {
-		return 0;
-	}
+
+	return 0;
 }
 
 
@@ -384,7 +388,7 @@ void Frame::generateIcmpEchoReply(ipAddressStructure localIp)
 }
 
 
-void Frame::generateTtlExceeded(Frame* old, ipAddressStructure localIp, WORD ipHeader)
+void Frame::generateTtlExceeded(Frame* old, ipAddressStructure localIp, WORD ipHeaderId)
 {
 	WORD w;
 
@@ -398,15 +402,15 @@ void Frame::generateTtlExceeded(Frame* old, ipAddressStructure localIp, WORD ipH
 	w = length - ETH2_HEADER_LENGTH;
 	frame[16] = getUpperByte(w);
 	frame[17] = getLowerByte(w);
-	frame[18] = getUpperByte(ipHeader);
-	frame[19] = getLowerByte(ipHeader);
+	frame[18] = getUpperByte(ipHeaderId);
+	frame[19] = getLowerByte(ipHeaderId);
 	frame[20] = 0;
 	frame[21] = 0;
 	frame[22] = 64;
 	frame[23] = 1;
 	setSourceIpAddress(localIp);
 	setDestinationIpAddress(old->getSourceIpAddress());
-	fillTcpChecksum();
+	fillIpChecksum();
 
 	frame[34] = 11;
 	frame[35] = 0;
@@ -418,10 +422,10 @@ void Frame::generateTtlExceeded(Frame* old, ipAddressStructure localIp, WORD ipH
 void Frame::fillIcmpChecksum(void)
 {
 	int ipHeadrLength = (frame[14] & 0x0F) * 4;
-	WORD* chksum_ptr = (WORD*)(frame + ETH2_HEADER_LENGTH + ipHeadrLength + 2);
+	WORD* checksumPtr = (WORD*)(frame + ETH2_HEADER_LENGTH + ipHeadrLength + 2);
 
-	*chksum_ptr = 0;
-	*chksum_ptr = calculateChecksum(merge(frame[16], frame[17]) - ipHeadrLength, frame + ETH2_HEADER_LENGTH + ipHeadrLength);
+	*checksumPtr = 0;
+	*checksumPtr = calculateChecksum(merge(frame[16], frame[17]) - ipHeadrLength, frame + ETH2_HEADER_LENGTH + ipHeadrLength);
 }
 
 
