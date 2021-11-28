@@ -192,11 +192,14 @@
     </ResourceCompile>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClInclude Include="AddressPoolDlg.h" />
+    <ClInclude Include="AddStaticNatDlg.h" />
     <ClInclude Include="AddStaticRouteDlg.h" />
     <ClInclude Include="ArpTable.h" />
     <ClInclude Include="Frame.h" />
     <ClInclude Include="framework.h" />
     <ClInclude Include="Interface.h" />
+    <ClInclude Include="NatTable.h" />
     <ClInclude Include="pch.h" />
     <ClInclude Include="ProtocolStorage.h" />
     <ClInclude Include="Resource.h" />
@@ -211,10 +214,13 @@
     <ClInclude Include="Timer.h" />
   </ItemGroup>
   <ItemGroup>
+    <ClCompile Include="AddressPoolDlg.cpp" />
+    <ClCompile Include="AddStaticNatDlg.cpp" />
     <ClCompile Include="AddStaticRouteDlg.cpp" />
     <ClCompile Include="ArpTable.cpp" />
     <ClCompile Include="Frame.cpp" />
     <ClCompile Include="Interface.cpp" />
+    <ClCompile Include="NatTable.cpp" />
     <ClCompile Include="pch.cpp">
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">Create</PrecompiledHeader>
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Create</PrecompiledHeader>

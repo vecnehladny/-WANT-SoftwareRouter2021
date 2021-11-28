@@ -101,4 +101,8 @@ public:
 	int getRipRouteCount(void);
 	CArray<ripResponseStructure>& getRipRoutesFromPacket(void);
 	void fillUdpChecksum(void);
+	void setLayer4SourcePort(WORD port);
+	void setLayer4DestinationPort(WORD port);
+	WORD getIcmpId(void);
+	void setIcmpId(WORD id);
 };

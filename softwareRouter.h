@@ -25,7 +25,6 @@ public:
 // Overrides
 public:
 	virtual BOOL InitInstance();
-	BOOL statsEnabled;
 	Interface* getInterface(int);
 	CsoftwareRouterDlg* getSoftwareRouterDialog();
 	RoutingTable* getRoutingTable();
@@ -34,6 +33,7 @@ public:
 	void startThreads(void);
 	int compareMac(macAddressStructure& mac1, macAddressStructure& mac2);
 	int isBroadcast(macAddressStructure& address);
+	NatTable* getNatTable(void);
 
 // Implementation
 
@@ -44,6 +44,7 @@ private:
 	Interface* interface2;
 	RoutingTable* routingTable;
 	ArpTable* arpTable;
+	NatTable* natTable;
 };
 
 extern CsoftwareRouterApp theApp;

@@ -3,6 +3,8 @@
 #include "Frame.h"
 #include <pcap.h>
 
+enum NAT_MODE { DISABLED, INSIDE, OUTSIDE };
+
 class Interface {
 public:
 	Interface(int id);
@@ -25,6 +27,8 @@ private:
 	CCriticalSection criticalSectionHandle;
 	CCriticalSection criticalSectionSend;
 	ipAddressStructure prefixStruct;
+	NAT_MODE natMode;
+	CCriticalSection criticalSectionNatmode;
 
 public:
 	int getId();
@@ -57,4 +61,6 @@ public:
 	static UINT receiveThread(void* pParam);
 	int sendFrame(Frame* buffer, ipAddressStructure* nextHop = NULL, BOOL UseARP = TRUE);
 	Frame* getFrames(void);
+	void setNATmode(NAT_MODE mode);
+	NAT_MODE getNATmode(void);
 };

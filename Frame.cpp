@@ -726,3 +726,38 @@ void Frame::fillUdpChecksum(void)
 
 	*checksumPointer = (WORD)(~sum);
 }
+
+
+WORD Frame::getIcmpId(void)
+{
+	int ipHeaderLength = (frame[14] & 0x0F) * 4;
+
+	return merge(frame[ETH2_HEADER_LENGTH + ipHeaderLength + 4], frame[ETH2_HEADER_LENGTH + ipHeaderLength + 5]);
+}
+
+
+void Frame::setIcmpId(WORD id)
+{
+	int ipHeaderLength = (frame[14] & 0x0F) * 4;
+
+	frame[ETH2_HEADER_LENGTH + ipHeaderLength + 4] = getUpperByte(id);
+	frame[ETH2_HEADER_LENGTH + ipHeaderLength + 5] = getLowerByte(id);
+}
+
+
+void Frame::setLayer4SourcePort(WORD port)
+{
+	int ipHeaderLength = (frame[14] & 0x0F) * 4;
+
+	frame[ETH2_HEADER_LENGTH + ipHeaderLength] = getUpperByte(port);
+	frame[ETH2_HEADER_LENGTH + ipHeaderLength + 1] = getLowerByte(port);
+}
+
+
+void Frame::setLayer4DestinationPort(WORD port)
+{
+	int ipHeaderLength = (frame[14] & 0x0F) * 4;
+
+	frame[ETH2_HEADER_LENGTH + ipHeaderLength + 2] = getUpperByte(port);
+	frame[ETH2_HEADER_LENGTH + ipHeaderLength + 3] = getLowerByte(port);
+}

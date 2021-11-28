@@ -66,6 +66,15 @@
     <ClInclude Include="SetRipTimersDlg.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="AddStaticNatDlg.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="NatTable.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="AddressPoolDlg.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="softwareRouter.cpp">
@@ -108,6 +117,15 @@
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="SetRipTimersDlg.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="AddStaticNatDlg.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="NatTable.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="AddressPoolDlg.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>

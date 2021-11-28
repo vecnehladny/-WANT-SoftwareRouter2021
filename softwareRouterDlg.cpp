@@ -9,6 +9,8 @@
 #include "afxdialogex.h"
 #include "SetIpDlg.h"
 #include "SetRipTimersDlg.h"
+#include "AddStaticNatDlg.h"
+#include "AddressPoolDlg.h"
 
 #ifdef _DEBUG
 #define new DEBUG_NEW
@@ -79,6 +81,16 @@ void CsoftwareRouterDlg::DoDataExchange(CDataExchange* pDX)
 	DDX_Control(pDX, IDC_RIPV2ENABLEBTN, ripEnableButton);
 	DDX_Control(pDX, IDC_RIPV2SETTIMERSBTN, ripSetTimersButton);
 	DDX_Control(pDX, IDC_RIPV2NEXTUPDATE, ripUpdateInText);
+	DDX_Control(pDX, IDC_INT1NATMODECOMBO, int1NatmodeCombo);
+	DDX_Control(pDX, IDC_INT2NATMODECOMBO, int2NatmodeCombo);
+	DDX_Control(pDX, IDC_NATTABLE, natTableBox);
+	DDX_Control(pDX, IDC_NATCURRENTPOOL, currPool);
+	DDX_Control(pDX, IDC_NATSTARTBTN, enableNatButton);
+	DDX_Control(pDX, IDC_PATSTARTBTN, enablePatButton);
+	DDX_Control(pDX, IDC_NATTABLEADDBTN, addStaticNatButton);
+	DDX_Control(pDX, IDC_NATTABLEREMOVEBTN, removeStaticNatButton);
+	DDX_Control(pDX, IDC_NATSETADDRESSPOOLBTN, setAddressPoolButton);
+	DDX_Control(pDX, IDC_NATREMOVERESERVATIONSBTN, removeReservationsButton);
 }
 
 BEGIN_MESSAGE_MAP(CsoftwareRouterDlg, CDialogEx)
@@ -100,6 +112,18 @@ BEGIN_MESSAGE_MAP(CsoftwareRouterDlg, CDialogEx)
 	ON_BN_CLICKED(IDC_RIPV2ENABLEBTN, &CsoftwareRouterDlg::onRipEnableButtonClicked)
 	ON_BN_CLICKED(IDC_RIPV2SETTIMERSBTN, &CsoftwareRouterDlg::onRipSetTimersButtonClicked)
 	ON_MESSAGE(WM_RIPUPDATE_MESSAGE, &CsoftwareRouterDlg::onRipUpdateMessage)
+	ON_BN_CLICKED(IDC_NATTABLEADDBTN, &CsoftwareRouterDlg::onAddNatButtonClicked)
+	ON_BN_CLICKED(IDC_NATTABLEREMOVEBTN, &CsoftwareRouterDlg::onRemoveNatButtonClicked)
+	ON_MESSAGE(WM_ADDNAT_MESSAGE, &CsoftwareRouterDlg::onAddNatMessage)
+	ON_MESSAGE(WM_REMOVENAT_MESSAGE, &CsoftwareRouterDlg::onRemoveNatMessage)
+	ON_BN_CLICKED(IDC_NATSETADDRESSPOOLBTN, &CsoftwareRouterDlg::onSetPoolButtonClicked)
+	ON_MESSAGE(WM_EDITPOOL_MESSAGE, &CsoftwareRouterDlg::onEditPoolMessage)
+	ON_MESSAGE(WM_UPDATENAT_MESSAGE, &CsoftwareRouterDlg::onUpdateNatMessage)
+	ON_BN_CLICKED(IDC_NATREMOVERESERVATIONSBTN, &CsoftwareRouterDlg::onResetNatButtonClicked)
+	ON_BN_CLICKED(IDC_NATSTARTBTN, &CsoftwareRouterDlg::onEnableNatButtonClicked)
+	ON_BN_CLICKED(IDC_PATSTARTBTN, &CsoftwareRouterDlg::onEnablePatButtonClicked)
+	ON_CBN_SELCHANGE(IDC_INT1NATMODECOMBO, &CsoftwareRouterDlg::onInt1NatModeChange)
+	ON_CBN_SELCHANGE(IDC_INT2NATMODECOMBO, &CsoftwareRouterDlg::onInt2NatModeChange)
 END_MESSAGE_MAP()
 
 
@@ -138,6 +162,7 @@ BOOL CsoftwareRouterDlg::OnInitDialog()
 	initInterfacesInfos();
 	initRoutingTable();
 	initArpTable();
+	initNatTable();
 	ripUpdateInText.SetWindowTextW(_TEXT("-"));
 	theApp.startThreads();
 
@@ -200,6 +225,9 @@ void CsoftwareRouterDlg::initInterfacesInfos()
 
 	int1MacAddressText.SetWindowTextW(theApp.getInterface(1)->getMacAddress());
 	int2MacAddressText.SetWindowTextW(theApp.getInterface(2)->getMacAddress());
+
+	int1NatmodeCombo.SetCurSel(0);
+	int2NatmodeCombo.SetCurSel(0);
 }
 
 void CsoftwareRouterDlg::enableInterface(Interface* i, CMFCButton* enableButton)
@@ -557,4 +585,265 @@ afx_msg LRESULT CsoftwareRouterDlg::onRipUpdateMessage(WPARAM wParam, LPARAM lPa
 	free(sec);
 
 	return 0;
+}
+
+
+void CsoftwareRouterDlg::initNatTable()
+{
+	natTableBox.SetExtendedStyle(natTableBox.GetExtendedStyle() | LVS_EX_FULLROWSELECT | LVS_EX_GRIDLINES);
+	natTableBox.InsertColumn(0, _T("Protocol"), LVCFMT_CENTER, 60);
+	natTableBox.InsertColumn(1, _T("Mode"), LVCFMT_CENTER, 120);
+	natTableBox.InsertColumn(2, _T("Global address"), LVCFMT_CENTER, 150);
+	natTableBox.InsertColumn(3, _T("Local address"), LVCFMT_CENTER, 150);
+	natTableBox.InsertColumn(4, _T("Timeout"), LVCFMT_CENTER, 100);
+}
+
+
+void CsoftwareRouterDlg::onAddNatButtonClicked()
+{
+	AfxBeginThread(CsoftwareRouterDlg::editStaticNatThread, NULL);
+}
+
+
+void CsoftwareRouterDlg::onRemoveNatButtonClicked()
+{
+	int index = natTableBox.GetSelectionMark();
+
+	if (index == -1) AfxMessageBox(_T("No translation was selected!"));
+	else if (theApp.getNatTable()->removeTranslation(index)) AfxMessageBox(_T("Please select a STATIC rule!"));
+}
+
+
+void CsoftwareRouterDlg::onSetPoolButtonClicked()
+{
+	AfxBeginThread(CsoftwareRouterDlg::editPoolThread, NULL);
+}
+
+
+void CsoftwareRouterDlg::onResetNatButtonClicked()
+{
+	theApp.getNatTable()->removeAllDynamic();
+}
+
+
+void CsoftwareRouterDlg::onEnableNatButtonClicked()
+{
+	NatTable* nat = theApp.getNatTable();
+
+	if (nat->isDynamicNatEnabled())
+	{
+		nat->disableDynamicNat();
+		enableNatButton.SetWindowTextW(_T("Enable NAT"));
+	}
+	else
+	{
+		if (!nat->isPoolSet())
+		{
+			AfxMessageBox(_T("Configure the IP address pool first!"));
+			return;
+		}
+
+		if (nat->isPatEnabled())
+		{
+			nat->disablePat();
+			enablePatButton.SetWindowTextW(_T("Enable PAT"));
+		}
+		nat->enableDynamicNat();
+		enableNatButton.SetWindowTextW(_T("Disable NAT"));
+	}
+}
+
+
+void CsoftwareRouterDlg::onEnablePatButtonClicked()
+{
+	NatTable* nat = theApp.getNatTable();
+
+	if (nat->isPatEnabled())
+	{
+		nat->disablePat();
+		enablePatButton.SetWindowTextW(_T("Enable PAT"));
+	}
+	else
+	{
+		if (nat->isDynamicNatEnabled())
+		{
+			nat->disableDynamicNat();
+			enableNatButton.SetWindowTextW(_T("Enable NAT"));
+		}
+		nat->enablePat();
+		enablePatButton.SetWindowTextW(_T("Disable PAT"));
+	}
+}
+
+
+LRESULT CsoftwareRouterDlg::onAddNatMessage(WPARAM wParam, LPARAM lParam)
+{
+	int* index = (int*)wParam;
+	translationStructure* nat = (translationStructure*)lParam;
+	ProtocolStorage* db = ProtocolStorage::getInstance();
+	CString tmp;
+
+	if ((nat->type != PAT) && (!nat->isPortForward)) natTableBox.InsertItem(*index, _T("-"));
+	else natTableBox.InsertItem(*index, db->getIpProtocolName(nat->layer4Protocol));
+
+	if (nat->mode == INSIDE) natTableBox.SetItemText(*index, 1, _T("INSIDE"));
+	else natTableBox.SetItemText(*index, 1, _T("OUTSIDE"));
+
+	if ((nat->isPortForward) || (nat->type == PAT)) tmp.Format(_T("%u.%u.%u.%u:%u"), nat->global.octets[3], nat->global.octets[2], nat->global.octets[1], nat->global.octets[0], nat->globalPort);
+	else tmp.Format(_T("%u.%u.%u.%u"), nat->global.octets[3], nat->global.octets[2], nat->global.octets[1], nat->global.octets[0]);
+	natTableBox.SetItemText(*index, 2, tmp);
+
+	if ((nat->isPortForward) || (nat->type == PAT)) tmp.Format(_T("%u.%u.%u.%u:%u"), nat->local.octets[3], nat->local.octets[2], nat->local.octets[1], nat->local.octets[0], nat->localPort);
+	else tmp.Format(_T("%u.%u.%u.%u"), nat->local.octets[3], nat->local.octets[2], nat->local.octets[1], nat->local.octets[0]);
+	natTableBox.SetItemText(*index, 3, tmp);
+
+	if (nat->type == STATICNAT) natTableBox.SetItemText(*index, 4, _T("-"));
+	else
+	{
+		tmp.Format(_T("%.2d:%.2d"), nat->timeout / 60, nat->timeout % 60);
+		natTableBox.SetItemText(*index, 4, tmp);
+	}
+
+	free(index);
+	free(nat);
+
+	return 0;
+}
+
+
+LRESULT CsoftwareRouterDlg::onRemoveNatMessage(WPARAM wParam, LPARAM lParam)
+{
+	int* index = (int*)lParam;
+
+	natTableBox.DeleteItem(*index);
+	free(index);
+
+	return 0;
+}
+
+
+LRESULT CsoftwareRouterDlg::onEditPoolMessage(WPARAM wParam, LPARAM lParam)
+{
+	ipAddressStructure* startIpAddress = (ipAddressStructure*)wParam;
+	ipAddressStructure* endIpAddress = (ipAddressStructure*)lParam;
+	CString tmp;
+
+	tmp.Format(_T("%u.%u.%u.%u/%u"), startIpAddress->octets[3], startIpAddress->octets[2], startIpAddress->octets[1], startIpAddress->octets[0], startIpAddress->mask);
+	tmp.AppendFormat(_T(" - "));
+	tmp.AppendFormat(_T("%u.%u.%u.%u/%u"), endIpAddress->octets[3], endIpAddress->octets[2], endIpAddress->octets[1], endIpAddress->octets[0], endIpAddress->mask);
+	currPool.SetWindowTextW(tmp);
+
+	free(startIpAddress);
+	free(endIpAddress);
+
+	return 0;
+}
+
+
+LRESULT CsoftwareRouterDlg::onUpdateNatMessage(WPARAM wParam, LPARAM lParam)
+{
+	int* index = (int*)wParam;
+	UINT* timeout = (UINT*)lParam;
+	CString tmp;
+
+	tmp.Format(_T("%.2d:%.2d"), *timeout / 60, *timeout % 60);
+	natTableBox.SetItemText(*index, 4, tmp);
+
+	free(index);
+	free(timeout);
+
+	return 0;
+}
+
+
+void CsoftwareRouterDlg::addTranslation(int index, translationStructure& nat)
+{
+	int* indexPtr = (int*)malloc(sizeof(int));
+	translationStructure* natPtr = (translationStructure*)malloc(sizeof(translationStructure));
+	*indexPtr = index;
+	*natPtr = nat;
+	SendMessage(WM_ADDNAT_MESSAGE, (WPARAM)indexPtr, (LPARAM)natPtr);
+}
+
+
+void CsoftwareRouterDlg::removeTranslation(int index)
+{
+	int* indexPtr = (int*)malloc(sizeof(int));
+
+	*indexPtr = index;
+	SendMessage(WM_REMOVENAT_MESSAGE, 0, (LPARAM)indexPtr);
+}
+
+
+UINT CsoftwareRouterDlg::editStaticNatThread(void* pParam)
+{
+	AddStaticNatDlg addStaticNatDlg;
+	addStaticNatDlg.DoModal();
+
+	return 0;
+}
+
+
+void CsoftwareRouterDlg::editPool(ipAddressStructure start, ipAddressStructure end)
+{
+	ipAddressStructure* startIpPtr = (ipAddressStructure*)malloc(sizeof(ipAddressStructure));
+	ipAddressStructure* lastIpPtr = (ipAddressStructure*)malloc(sizeof(ipAddressStructure));
+
+	*startIpPtr = start;
+	*lastIpPtr = end;
+
+	SendMessage(WM_EDITPOOL_MESSAGE, (WPARAM)startIpPtr, (LPARAM)lastIpPtr);
+}
+
+
+UINT CsoftwareRouterDlg::editPoolThread(void* pParam)
+{
+	AddressPoolDlg addressPoolDlg;
+	addressPoolDlg.DoModal();
+
+	return 0;
+}
+
+
+void CsoftwareRouterDlg::updateTranslation(int index, UINT timeout)
+{
+	int* indexPtr = (int*)malloc(sizeof(int));
+	UINT* timeoutPtr = (UINT*)malloc(sizeof(UINT));
+	*indexPtr = index;
+	*timeoutPtr = timeout;
+	SendMessage(WM_UPDATENAT_MESSAGE, (WPARAM)indexPtr, (LPARAM)timeoutPtr);
+}
+
+
+void CsoftwareRouterDlg::onInt1NatModeChange()
+{
+	switch (int1NatmodeCombo.GetCurSel())
+	{
+	case 0:
+		theApp.getInterface(1)->setNATmode(DISABLED);
+		break;
+	case 1:
+		theApp.getInterface(1)->setNATmode(INSIDE);
+		break;
+	case 2:
+		theApp.getInterface(1)->setNATmode(OUTSIDE);
+		break;
+	}
+}
+
+
+void CsoftwareRouterDlg::onInt2NatModeChange()
+{
+	switch (int2NatmodeCombo.GetCurSel())
+	{
+	case 0:
+		theApp.getInterface(2)->setNATmode(DISABLED);
+		break;
+	case 1:
+		theApp.getInterface(2)->setNATmode(INSIDE);
+		break;
+	case 2:
+		theApp.getInterface(2)->setNATmode(OUTSIDE);
+		break;
+	}
 }

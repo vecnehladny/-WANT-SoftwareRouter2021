@@ -77,6 +77,7 @@ BOOL CsoftwareRouterApp::InitInstance()
 	interface2 = new Interface(2);
 	routingTable = new RoutingTable();
 	arpTable = new ArpTable();
+	natTable = new NatTable();
 
 	CSetIntDlg setIntDlg;
 	INT_PTR nResponse = setIntDlg.DoModal();
@@ -148,6 +149,7 @@ UINT CsoftwareRouterApp::routingProcess(void* pParam)
 	Frame TTLex;
 	RoutingTable* routingTable = theApp.getRoutingTable();
 	ArpTable* arpTable = theApp.getArpTable();
+	NatTable* natTable = theApp.getNatTable();
 	int retval;
 	macAddressStructure sourceMac, destinationMac, localMac = inInterface->getMacAddressStruct();
 	ipAddressStructure destinationIp, nextHop, * nextHopPointer;
@@ -202,6 +204,9 @@ UINT CsoftwareRouterApp::routingProcess(void* pParam)
 			TTLex.clear();
 			continue;
 		}
+
+		//NAT
+		if (natTable->translate(buffer, inInterface) != 0) continue;
 
 		destinationIp = buffer->getDestinationIpAddress();
 		if ((theApp.getInterface(1)->isIpLocal(destinationIp)) || (theApp.getInterface(2)->isIpLocal(destinationIp)))
@@ -264,4 +269,10 @@ int CsoftwareRouterApp::isBroadcast(macAddressStructure& address)
 	}
 
 	return 1;
+}
+
+
+NatTable* CsoftwareRouterApp::getNatTable()
+{
+	return natTable;
 }

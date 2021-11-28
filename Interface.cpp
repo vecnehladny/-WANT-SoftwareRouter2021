@@ -10,6 +10,7 @@ Interface::Interface(int id) :
 	ipAddressIsSet(FALSE),
 	handle(NULL)
 {
+	natMode = DISABLED;
 	for (int i = 0; i < 6; i++) {
 		macAddressStruct.section[i] = 0x00;
 	}
@@ -406,4 +407,21 @@ int Interface::sendFrame(Frame* buffer, ipAddressStructure* nextHop, BOOL UseARP
 Frame* Interface::getFrames(void)
 {
 	return frames;
+}
+
+
+void Interface::setNATmode(NAT_MODE mode)
+{
+	criticalSectionNatmode.Lock();
+	natMode = mode;
+	criticalSectionNatmode.Unlock();
+}
+
+
+NAT_MODE Interface::getNATmode(void)
+{
+	CSingleLock lock(&criticalSectionNatmode);
+
+	lock.Lock();
+	return natMode;
 }
